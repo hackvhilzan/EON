@@ -26,6 +26,16 @@ from .solver import (
     parse_problem_html,
     solve_problem,
 )
+from .trace_logger import (
+    JsonlTraceSink,
+    ModelInfo,
+    SampleResult,
+    SandboxInfo,
+    SolutionInfo,
+    TraceRecord,
+    TraceSink,
+    VerifierInfo,
+)
 
 __all__ = [
     "CFChecker",
@@ -38,4 +48,12 @@ __all__ = [
     "fetch_problem",
     "parse_problem_html",
     "solve_problem",
+    "JsonlTraceSink",
+    "ModelInfo",
+    "SampleResult",
+    "SandboxInfo",
+    "SolutionInfo",
+    "TraceRecord",
+    "TraceSink",
+    "VerifierInfo",
 ]
