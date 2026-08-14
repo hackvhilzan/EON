@@ -29,6 +29,15 @@ from pathlib import Path
 from ..sandbox import SandboxExecutor, SandboxProfile, SandboxResult
 from ..tools.base_tool import Tool
 from .cf_checker import CFChecker, CheckMode
+from .trace_logger import (
+    ModelInfo,
+    SampleResult,
+    SandboxInfo,
+    SolutionInfo,
+    TraceRecord,
+    TraceSink,
+    VerifierInfo,
+)
 
 _COMPILE_TIMEOUT_SECONDS = 10.0
 _SAMPLE_TIMEOUT_SECONDS = 5.0
@@ -195,28 +204,36 @@ def _ejecutar_samples(
     checker_mode: CheckMode,
     deadline: float,
     ejecutar_uno,
-) -> tuple[str, str]:
+) -> tuple[str, str, list[SampleResult], SandboxResult | None]:
+    sample_results: list[SampleResult] = []
+    ultimo_sandbox: SandboxResult | None = None
     for i, sample in enumerate(samples, start=1):
         restante = deadline - time.monotonic()
         if restante <= 0:
-            return "fail", f"Presupuesto de tiempo agotado antes del sample {i}"
+            return "fail", f"Presupuesto de tiempo agotado antes del sample {i}", sample_results, ultimo_sandbox
         profile = SandboxProfile(
             profile_id="cf-run",
             max_duration_seconds=min(_SAMPLE_TIMEOUT_SECONDS, restante),
         )
         result: SandboxResult = ejecutar_uno(sample, profile)
+        ultimo_sandbox = result
         if result.timed_out:
-            return "fail", f"Sample {i}: timeout tras {profile.max_duration_seconds:.1f}s"
+            motivo = f"timeout tras {profile.max_duration_seconds:.1f}s"
+            sample_results.append(SampleResult(i - 1, False, motivo))
+            return "fail", f"Sample {i}: {motivo}", sample_results, ultimo_sandbox
         if not result.success:
-            return "fail", f"Sample {i}: exit_code={result.exit_code} stderr={result.stderr[:500]}"
+            motivo = f"exit_code={result.exit_code} stderr={result.stderr[:500]}"
+            sample_results.append(SampleResult(i - 1, False, motivo))
+            return "fail", f"Sample {i}: {motivo}", sample_results, ultimo_sandbox
 
         layer = _checker.verificar(
             objective=None,
             evidence={"actual": result.stdout, "expected": sample.output, "mode": checker_mode},
         )
+        sample_results.append(SampleResult(i - 1, layer.passed, layer.motivo))
         if not layer.passed:
-            return "fail", f"Sample {i}: {layer.motivo}"
-    return "pass", "todos los samples pasaron"
+            return "fail", f"Sample {i}: {layer.motivo}", sample_results, ultimo_sandbox
+    return "pass", "todos los samples pasaron", sample_results, ultimo_sandbox
 
 
 def _resolver_y_verificar(
@@ -226,10 +243,11 @@ def _resolver_y_verificar(
     samples: list[CFSample],
     checker_mode: CheckMode,
     deadline: float,
-) -> tuple[str, str]:
+) -> tuple[str, str, list[SampleResult], SandboxResult | None]:
     """Compila (si aplica) y ejecuta `code` contra cada sample.
 
-    Devuelve (verdict, detail) con verdict en {"pass", "compile_error", "fail"}.
+    Devuelve (verdict, detail, sample_results, sandbox_result) con
+    verdict en {"pass", "compile_error", "fail"}.
     """
     if language == "python":
         return _ejecutar_samples(
@@ -254,7 +272,8 @@ def _resolver_y_verificar(
                 profile=compile_profile,
             )
             if not compile_result.success:
-                return "compile_error", compile_result.stderr or "Error de compilación desconocido"
+                detail = compile_result.stderr or "Error de compilación desconocido"
+                return "compile_error", detail, [], compile_result
 
             return _ejecutar_samples(
                 samples,
@@ -263,7 +282,7 @@ def _resolver_y_verificar(
                 lambda sample, profile: executor.run_command([str(binary_path)], profile=profile, stdin=sample.input),
             )
 
-    return "fail", f"Lenguaje no soportado: {language!r} (usa python o cpp)"
+    return "fail", f"Lenguaje no soportado: {language!r} (usa python o cpp)", [], None
 
 
 # ─── Loop principal ─────────────────────────────────────────────
@@ -285,20 +304,69 @@ class SolveResult:
     language: str | None = None
 
 
+def _sandbox_info(result: SandboxResult | None) -> SandboxInfo | None:
+    if result is None:
+        return None
+    return SandboxInfo(exit_code=result.exit_code, timed_out=result.timed_out, duration_s=result.duration_seconds)
+
+
+def _log_attempt(
+    trace_sink: TraceSink | None,
+    *,
+    problem: CFProblem,
+    prompt: str,
+    model_info: ModelInfo,
+    output_raw: str,
+    solution: SolutionInfo | None,
+    attempt_num: int,
+    verdict: str,
+    checker_mode: CheckMode,
+    sample_results: list[SampleResult],
+    sandbox_result: SandboxResult | None,
+    detail: str | None,
+) -> None:
+    if trace_sink is None:
+        return
+    record = TraceRecord.create(
+        domain="codeforces",
+        problem_id=problem.url,
+        objective=problem.statement,
+        prompt=prompt,
+        model=model_info,
+        output_raw=output_raw,
+        solution=solution,
+        attempt_index=attempt_num - 1,
+        verdict="PASS" if verdict == "pass" else "FAIL",
+        verifier=VerifierInfo(name=_checker.name, mode=checker_mode),
+        sample_results=sample_results,
+        sandbox=_sandbox_info(sandbox_result),
+        error=None if verdict == "pass" else detail,
+    )
+    trace_sink.write(record)
+
+
 async def solve_problem(
     problem_url: str,
     *,
     internet_tool: Tool,
     llm_tool: Tool,
     executor: SandboxExecutor | None = None,
+    trace_sink: TraceSink | None = None,
+    model_info: ModelInfo | None = None,
     max_retries: int = _DEFAULT_MAX_RETRIES,
     time_budget_seconds: float = _DEFAULT_TIME_BUDGET_SECONDS,
     checker_mode: CheckMode = "whitespace_normalized",
 ) -> SolveResult:
     """Resuelve `problem_url`: fetch -> solve(LLM) -> sandbox -> cf_checker,
     con hasta `max_retries` intentos realimentando el error al modelo.
+
+    Si se inyecta `trace_sink` (protocolo TraceSink, ver trace_logger.py),
+    cada intento -- PASS o FAIL -- se registra tras su verify vía
+    `trace_sink.write()`. Sin `trace_sink` no cambia nada del
+    comportamiento existente.
     """
     executor = executor or SandboxExecutor()
+    model_info = model_info or ModelInfo()
     problem = await fetch_problem(internet_tool, problem_url)
 
     attempts: list[SolveAttempt] = []
@@ -312,19 +380,64 @@ async def solve_problem(
         if not llm_result.ok:
             detail = f"Error del LLM: {llm_result.error}"
             attempts.append(SolveAttempt(attempt_num, None, "fail", detail))
+            _log_attempt(
+                trace_sink,
+                problem=problem,
+                prompt=prompt,
+                model_info=model_info,
+                output_raw="",
+                solution=None,
+                attempt_num=attempt_num,
+                verdict="fail",
+                checker_mode=checker_mode,
+                sample_results=[],
+                sandbox_result=None,
+                detail=detail,
+            )
             feedback = detail
             continue
 
-        parsed = _extraer_solucion(str(llm_result.data or ""))
+        output_raw = str(llm_result.data or "")
+        parsed = _extraer_solucion(output_raw)
         if parsed is None:
             detail = "La respuesta del LLM no contiene un bloque ```python o ```cpp."
             attempts.append(SolveAttempt(attempt_num, None, "fail", detail))
+            _log_attempt(
+                trace_sink,
+                problem=problem,
+                prompt=prompt,
+                model_info=model_info,
+                output_raw=output_raw,
+                solution=None,
+                attempt_num=attempt_num,
+                verdict="fail",
+                checker_mode=checker_mode,
+                sample_results=[],
+                sandbox_result=None,
+                detail=detail,
+            )
             feedback = detail
             continue
 
         code, language = parsed
-        verdict, detail = _resolver_y_verificar(executor, code, language, problem.samples, checker_mode, deadline)
+        verdict, detail, sample_results, sandbox_result = _resolver_y_verificar(
+            executor, code, language, problem.samples, checker_mode, deadline
+        )
         attempts.append(SolveAttempt(attempt_num, language, verdict, detail))
+        _log_attempt(
+            trace_sink,
+            problem=problem,
+            prompt=prompt,
+            model_info=model_info,
+            output_raw=output_raw,
+            solution=SolutionInfo(code=code, lang=language),
+            attempt_num=attempt_num,
+            verdict=verdict,
+            checker_mode=checker_mode,
+            sample_results=sample_results,
+            sandbox_result=sandbox_result,
+            detail=detail,
+        )
         if verdict == "pass":
             return SolveResult(True, attempts, code, language)
         feedback = detail

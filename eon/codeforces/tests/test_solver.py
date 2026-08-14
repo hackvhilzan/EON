@@ -14,6 +14,7 @@ from ..solver import (
     parse_problem_html,
     solve_problem,
 )
+from ..trace_logger import TraceRecord
 
 _PROBLEM_HTML = """
 <html><body>
@@ -84,6 +85,14 @@ class _LLMDeRespuestasEnSecuencia(LLM):
     def generate(self, prompt: str) -> str:
         self.prompts_recibidos.append(prompt)
         return self._respuestas.pop(0)
+
+
+class _InMemoryTraceSink:
+    def __init__(self) -> None:
+        self.records: list[TraceRecord] = []
+
+    def write(self, record: TraceRecord) -> None:
+        self.records.append(record)
 
 
 # ─── Parseo de la respuesta del LLM ─────────────────────────
@@ -188,3 +197,51 @@ class TestSolveProblem:
         assert not result.solved
         assert len(result.attempts) == 3
         assert all(a.verdict == "fail" for a in result.attempts)
+
+
+class TestTraceSinkEnganche:
+    """Cada verify -- PASS o FAIL -- se registra en el trace_sink
+    inyectado (eon/codeforces/trace_logger.py), sin cambiar el
+    comportamiento de solve_problem cuando no se inyecta ninguno."""
+
+    async def test_registra_un_solo_record_pass_al_resolver_al_primer_intento(self):
+        llm = _LLMDeRespuestasEnSecuencia([_PY_SOLUCION_CORRECTA])
+        sink = _InMemoryTraceSink()
+        await solve_problem(
+            "https://cf/1A",
+            internet_tool=_FakeInternetTool(_PROBLEM_HTML),
+            llm_tool=LLMTool(llm=llm),
+            executor=SandboxExecutor(),
+            trace_sink=sink,
+        )
+        assert len(sink.records) == 1
+        record = sink.records[0]
+        assert record.verdict == "PASS"
+        assert record.attempt_index == 0
+        assert record.solution is not None
+        assert record.solution.lang == "python"
+        assert len(record.sample_results) == 2
+        assert all(s.passed for s in record.sample_results)
+        assert record.sandbox is not None
+        assert record.error is None
+
+    async def test_registra_un_record_fail_y_uno_pass_no_descarta_el_fail(self):
+        llm = _LLMDeRespuestasEnSecuencia([_PY_SOLUCION_INCORRECTA, _PY_SOLUCION_CORRECTA])
+        sink = _InMemoryTraceSink()
+        await solve_problem(
+            "https://cf/1A",
+            internet_tool=_FakeInternetTool(_PROBLEM_HTML),
+            llm_tool=LLMTool(llm=llm),
+            executor=SandboxExecutor(),
+            trace_sink=sink,
+        )
+        assert len(sink.records) == 2
+
+        fallido, exitoso = sink.records
+        assert fallido.verdict == "FAIL"
+        assert fallido.attempt_index == 0
+        assert fallido.error is not None
+        assert not fallido.sample_results[0].passed
+
+        assert exitoso.verdict == "PASS"
+        assert exitoso.attempt_index == 1
