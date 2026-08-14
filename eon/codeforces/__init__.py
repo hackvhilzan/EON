@@ -16,5 +16,26 @@ para cuando eso cambie.
 from __future__ import annotations
 
 from .cf_checker import CFChecker, CheckMode
+from .solver import (
+    CFFetchError,
+    CFProblem,
+    CFSample,
+    SolveAttempt,
+    SolveResult,
+    fetch_problem,
+    parse_problem_html,
+    solve_problem,
+)
 
-__all__ = ["CFChecker", "CheckMode"]
+__all__ = [
+    "CFChecker",
+    "CheckMode",
+    "CFFetchError",
+    "CFProblem",
+    "CFSample",
+    "SolveAttempt",
+    "SolveResult",
+    "fetch_problem",
+    "parse_problem_html",
+    "solve_problem",
+]
