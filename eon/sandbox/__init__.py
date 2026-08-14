@@ -13,6 +13,12 @@ Niveles de aislamiento:
 
 from __future__ import annotations
 
+# Re-exportado aquí (vive físicamente en eon.governance.models, que ya
+# gobierna las políticas del sandbox) para que un caller que solo
+# necesita configurar el sandbox pueda depender de eon.sandbox y nada
+# más -- ver eon/codeforces/ (regla verificada en
+# eon/tests/test_codeforces_boundary.py).
+from ..governance.models import SandboxProfile
 from .exceptions import (
     SandboxError,
     SandboxResourceExceeded,
@@ -23,6 +29,7 @@ from .executor import SandboxExecutor, SandboxResult
 
 __all__ = [
     "SandboxExecutor",
+    "SandboxProfile",
     "SandboxResult",
     "SandboxError",
     "SandboxTimeout",
