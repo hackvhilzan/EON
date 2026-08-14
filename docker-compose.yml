@@ -1,0 +1,25 @@
+# docker-compose.yml — conveniencia sobre el Dockerfile, no orquesta nada
+# más (CONSOLE_DEPLOYMENT.md §4: la Console es de un solo
+# usuario/local — CONSOLE.md §7 — no hay proxy/TLS/otro servicio que
+# coordinar en este contrato). Un Dockerfile suelto ya alcanzaría; esto
+# solo evita repetir a mano las flags de `docker run` cada vez.
+
+services:
+  console:
+    build: .
+    image: eon-console:latest
+    ports:
+      - "8765:8765"
+    volumes:
+      - eon-data:/data
+    environment:
+      # Sin valor por defecto: si no está seteada, `usar_llm` en
+      # POST /ejecuciones simplemente no tiene efecto (CONSOLE.md §10) —
+      # no es obligatoria para que el resto de la Console funcione.
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+    restart: unless-stopped
+
+volumes:
+  eon-data:

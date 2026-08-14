@@ -1,0 +1,7 @@
+# Instala solo lo que vayas a usar según EON_LLM_PROVIDER; los imports en cada
+# *_provider.py son perezosos, así que no necesitas todos los SDKs si solo usas uno.
+anthropic>=0.40
+openai>=1.50          # también sirve para groq/openrouter (endpoints OpenAI-compatible)
+google-generativeai>=0.8
+# ollama: no necesita SDK propio, usa httpx (ya en eon/requirements.txt)
+# fallback: no necesita SDK propio, reutiliza los de arriba según la cadena

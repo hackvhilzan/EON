@@ -1,0 +1,7 @@
+httpx>=0.27
+pypdf>=4.0
+pytest>=8.0
+pytest-asyncio>=0.24
+# opcionales según qué herramientas/proveedores uses:
+# anthropic, openai, google-generativeai (eon/llm)
+# google-api-python-client, google-auth (calendar_tool con Google Calendar real)

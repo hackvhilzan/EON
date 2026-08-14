@@ -1,0 +1,23 @@
+# No entra al build context de la imagen (CONSOLE_DEPLOYMENT.md §4: base
+# image, ver Dockerfile).
+
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.git/
+.gitignore
+
+# (eon/legacy/ ya no existe en el árbol -- se eliminó del repo, ver
+# ESTADO_ACTUAL.md. Esta exclusión queda sin efecto; se conserva la nota
+# por si algún día reaparece código histórico sin usarse.)
+
+# Datos locales de desarrollo (si alguien corrió la Console fuera de
+# Docker con el --root por defecto) — nunca deben terminar horneados en
+# la imagen.
+.eon_runtime/
+**/.eon_runtime/
+
+# Tests no son necesarios en runtime, pero se dejan dentro de eon/ porque
+# no pesan (unos KB) y mantener la imagen == el árbol simplifica soporte;
+# lo único que se excluye es lo que realmente no debe viajar.
