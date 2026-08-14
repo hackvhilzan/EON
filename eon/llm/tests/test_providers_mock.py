@@ -256,12 +256,18 @@ def fake_genai_module(monkeypatch):
     modulo._llamadas_configure = llamadas_configure
 
     monkeypatch.setitem(sys.modules, "google.generativeai", modulo)
-    # 'google' es un namespace package real en este entorno; nos aseguramos
-    # de que el atributo también quede accesible como google.generativeai,
-    # que es como `import google.generativeai as genai` lo resuelve.
-    import google
+    # 'google' puede no existir como namespace package si no hay instalado
+    # ningún paquete real de la familia google.* (p. ej. un venv solo con
+    # las deps de dev) -- lo creamos también como falso si hace falta, en
+    # vez de asumir que ya está, para que `import google.generativeai as
+    # genai` lo resuelva sin requerir el SDK real (ver docstring del
+    # módulo).
+    google_pkg = sys.modules.get("google")
+    if google_pkg is None:
+        google_pkg = types.ModuleType("google")
+        monkeypatch.setitem(sys.modules, "google", google_pkg)
 
-    monkeypatch.setattr(google, "generativeai", modulo, raising=False)
+    monkeypatch.setattr(google_pkg, "generativeai", modulo, raising=False)
     return modulo
 
 
