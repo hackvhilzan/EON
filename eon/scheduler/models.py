@@ -130,7 +130,9 @@ class SchedulerRun:
             "orden": list(self.orden),
             "estado": self.estado.value,
             "creado_en": self.creado_en.isoformat() if isinstance(self.creado_en, datetime) else str(self.creado_en),
-            "actualizado_en": self.actualizado_en.isoformat() if isinstance(self.actualizado_en, datetime) else str(self.actualizado_en),
+            "actualizado_en": self.actualizado_en.isoformat()
+            if isinstance(self.actualizado_en, datetime)
+            else str(self.actualizado_en),
             "historial": list(self.historial),
         }
 

@@ -7,6 +7,7 @@ Hooks para validadores externos: linters, type checkers, compiladores.
 Configurable por capability.
 Desactivado por defecto — requiere comandos explícitos.
 """
+
 from __future__ import annotations
 
 import logging
@@ -97,7 +98,9 @@ class ExternalVerifier:
             status=VerificationStatus.PASSED if all_passed else VerificationStatus.FAILED,
             confidence=confidence,
             motivo="; ".join(f"{r[0]}({r[1]}): {'OK' if r[2] else r[3][:80]}" for r in results),
-            details={"results": [{"tool": r[0], "artifact": r[1], "passed": r[2], "output": r[3][:200]} for r in results]},
+            details={
+                "results": [{"tool": r[0], "artifact": r[1], "passed": r[2], "output": r[3][:200]} for r in results]
+            },
         )
 
     def _run_external(self, command: list[str], content: str) -> tuple[bool, str]:

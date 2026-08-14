@@ -5,6 +5,7 @@ DatabaseTool — consultas SQL read-only.
 
 Dependencia opcional: sqlite3 (stdlib, siempre disponible)
 """
+
 from __future__ import annotations
 
 import logging

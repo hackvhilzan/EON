@@ -13,6 +13,7 @@ Criterios de aceptación:
 - Evento execution.forked se emite al EventStore
 - KernelRuntime.fork_from_checkpoint() integra correctamente
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -25,7 +26,6 @@ from eon.forking import ForkManager, ForkStatus, SQLiteForkStore
 from eon.forking.models import ExecutionFork
 from eon.persistence import SQLiteEngine
 from eon.persistence.event_store import EventStore
-
 
 # ─── Fixtures ─────────────────────────────────────────────
 
@@ -71,7 +71,8 @@ def _make_checkpoint(
         execution_id=execution_id,
         event_seq=event_seq,
         kind=CheckpointKind.MILESTONE,
-        stores_state=stores_state or {
+        stores_state=stores_state
+        or {
             "coordinator": {"estado": "running", "id": "exec-1"},
             "objective": {"estado": "in_progress", "id": "obj-1"},
         },
@@ -130,9 +131,8 @@ class TestForkManager:
 
         # Tamper: alterar el checkpoint en la DB
         import json
-        row = cp_store._engine.query_one(
-            "SELECT data FROM checkpoints WHERE id = ?", (cp.id,)
-        )
+
+        row = cp_store._engine.query_one("SELECT data FROM checkpoints WHERE id = ?", (cp.id,))
         data = json.loads(row["data"])
         data["stores_state"]["coordinator"]["estado"] = "TAMPERED"
         cp_store._engine.execute(
@@ -510,9 +510,7 @@ class TestForkStateCopy:
     def test_fork_deep_copies_state(self, fork_manager, cp_store):
         """El fork hace deep-copy (no comparte referencias)."""
         state = {"coordinator": {"estado": "running", "nested": [1, 2, 3]}}
-        cp = _make_checkpoint(
-            execution_id="exec-1", event_seq=3, stores_state=state
-        )
+        cp = _make_checkpoint(execution_id="exec-1", event_seq=3, stores_state=state)
         cp_store.save(cp)
 
         fork = fork_manager.fork_from_checkpoint(cp.id)

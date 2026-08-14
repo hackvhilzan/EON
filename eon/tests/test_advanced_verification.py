@@ -13,6 +13,7 @@ Criterios de aceptación:
 - Una capa FAILED crítica falla toda la verificación
 - Capas SKIPPED no afectan el resultado
 """
+
 from __future__ import annotations
 
 import pytest
@@ -21,17 +22,15 @@ from eon.verification import (
     CompositeVerifier,
     ConfidenceCalibrator,
     CriteriaVerifier,
+    EvidenceGraph,
+    EvidenceNode,
     ExternalVerifier,
+    LayerResult,
     LLMJudgeVerifier,
     StructuralVerifier,
     TestBasedVerifier,
-    EvidenceGraph,
-    EvidenceNode,
-    LayerResult,
-    VerificationResult,
     VerificationStatus,
 )
-
 
 # ─── StructuralVerifier Tests ─────────────────────────────
 
@@ -372,7 +371,7 @@ class TestCompositeVerifier:
         assert result.cumple is True
         assert result.confianza > 0.5
         assert len(result.layers) == 3
-        assert all(l.status == VerificationStatus.PASSED for l in result.layers)
+        assert all(layer.status == VerificationStatus.PASSED for layer in result.layers)
 
     def test_structural_failure_fails_all(self):
         v = CompositeVerifier()
@@ -428,6 +427,7 @@ class TestCompositeVerifier:
     def test_error_in_layer(self):
         class BadVerifier:
             name = "bad"
+
             def verificar(self, **kwargs):
                 raise RuntimeError("boom")
 
@@ -440,13 +440,13 @@ class TestCompositeVerifier:
             evidence={"tasks_totales": 1, "tasks_completadas": 1},
         )
 
-        assert any(l.status == VerificationStatus.ERROR for l in result.layers)
+        assert any(layer.status == VerificationStatus.ERROR for layer in result.layers)
 
     def test_skipped_layers_dont_fail(self):
         v = CompositeVerifier()
         v.add_layer(StructuralVerifier())  # pasará
-        v.add_layer(CriteriaVerifier())     # skipped (criterio no medible)
-        v.add_layer(LLMJudgeVerifier())     # skipped (no judge)
+        v.add_layer(CriteriaVerifier())  # skipped (criterio no medible)
+        v.add_layer(LLMJudgeVerifier())  # skipped (no judge)
 
         result = v.verificar(
             objective={"criterio_de_exito": "algo subjetivo"},

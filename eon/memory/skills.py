@@ -8,6 +8,7 @@ Si un objetivo nuevo es similar a uno anterior exitoso, se sugiere
 reutilizar el plan. Skills versionados: si el plan cambió, la skill
 se actualiza.
 """
+
 from __future__ import annotations
 
 import json
@@ -28,12 +29,12 @@ class Skill:
 
     id: str = ""
     name: str = ""
-    objective_pattern: str = ""          # descripción del objetivo que resuelve
-    plan_summary: str = ""               # resumen del plan
+    objective_pattern: str = ""  # descripción del objetivo que resuelve
+    plan_summary: str = ""  # resumen del plan
     plan_data: dict[str, Any] = field(default_factory=dict)  # plan serializado
     version: int = 1
-    success_count: int = 0              # veces que se reutilizó con éxito
-    fail_count: int = 0                  # veces que falló al reutilizarse
+    success_count: int = 0  # veces que se reutilizó con éxito
+    fail_count: int = 0  # veces que falló al reutilizarse
     created_at: str = field(default_factory=_ahora)
     updated_at: str = field(default_factory=_ahora)
 
@@ -110,25 +111,27 @@ class SkillLibrary:
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
-                skill.id, skill.name, skill.objective_pattern,
-                skill.plan_summary, json.dumps(skill.plan_data),
-                skill.version, skill.success_count, skill.fail_count,
-                skill.created_at, skill.updated_at,
+                skill.id,
+                skill.name,
+                skill.objective_pattern,
+                skill.plan_summary,
+                json.dumps(skill.plan_data),
+                skill.version,
+                skill.success_count,
+                skill.fail_count,
+                skill.created_at,
+                skill.updated_at,
             ),
         )
         self._conn.commit()
         return skill
 
     def get(self, skill_id: str) -> Skill | None:
-        row = self._conn.execute(
-            "SELECT * FROM skills WHERE id = ?", (skill_id,)
-        ).fetchone()
+        row = self._conn.execute("SELECT * FROM skills WHERE id = ?", (skill_id,)).fetchone()
         return self._row_to_skill(row) if row else None
 
     def list_all(self) -> list[Skill]:
-        rows = self._conn.execute(
-            "SELECT * FROM skills ORDER BY updated_at DESC"
-        ).fetchall()
+        rows = self._conn.execute("SELECT * FROM skills ORDER BY updated_at DESC").fetchall()
         return [self._row_to_skill(r) for r in rows]
 
     def match(self, objective: str, min_score: float = 0.1) -> Skill | None:
@@ -182,15 +185,17 @@ class SkillLibrary:
 
     @staticmethod
     def _row_to_skill(row: sqlite3.Row) -> Skill:
-        return Skill.from_dict({
-            "id": row["id"],
-            "name": row["name"],
-            "objective_pattern": row["objective_pattern"],
-            "plan_summary": row["plan_summary"],
-            "plan_data": json.loads(row["plan_data"] or "{}"),
-            "version": row["version"],
-            "success_count": row["success_count"],
-            "fail_count": row["fail_count"],
-            "created_at": row["created_at"],
-            "updated_at": row["updated_at"],
-        })
+        return Skill.from_dict(
+            {
+                "id": row["id"],
+                "name": row["name"],
+                "objective_pattern": row["objective_pattern"],
+                "plan_summary": row["plan_summary"],
+                "plan_data": json.loads(row["plan_data"] or "{}"),
+                "version": row["version"],
+                "success_count": row["success_count"],
+                "fail_count": row["fail_count"],
+                "created_at": row["created_at"],
+                "updated_at": row["updated_at"],
+            }
+        )

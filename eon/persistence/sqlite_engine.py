@@ -11,6 +11,7 @@ se implementan con JSON extract functions de SQLite.
 Thread-safety: SQLite con check_same_thread=False + un Lock por store.
 WAL mode para permitir lecturas concurrentes sin bloquear escrituras.
 """
+
 from __future__ import annotations
 
 import json
@@ -232,9 +233,7 @@ class SQLiteEngine:
 
     def list_entities_by_col(self, table: str, col: str, value: Any) -> list[dict[str, Any]]:
         """Lista entidades filtrando por una columna."""
-        rows = self.query_all(
-            f"SELECT data FROM {table} WHERE {col} = ? ORDER BY created_at", (value,)
-        )
+        rows = self.query_all(f"SELECT data FROM {table} WHERE {col} = ? ORDER BY created_at", (value,))
         return [json.loads(r["data"]) for r in rows]
 
     def delete_entity(self, table: str, entity_id: str) -> bool:

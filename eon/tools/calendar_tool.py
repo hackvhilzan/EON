@@ -6,6 +6,7 @@ CalendarTool — crear/leer eventos (Google Calendar API).
 Dependencia opcional: google-api-python-client + google-auth-oauthlib
 Requiere OAuth flow completo.
 """
+
 from __future__ import annotations
 
 import logging
@@ -80,12 +81,16 @@ class CalendarTool(Tool):
             service = self._ensure_service()
 
             if action == "list":
-                events_result = service.events().list(
-                    calendarId=calendar_id,
-                    maxResults=max_results,
-                    singleEvents=True,
-                    orderBy="startTime",
-                ).execute()
+                events_result = (
+                    service.events()
+                    .list(
+                        calendarId=calendar_id,
+                        maxResults=max_results,
+                        singleEvents=True,
+                        orderBy="startTime",
+                    )
+                    .execute()
+                )
                 events = events_result.get("items", [])
                 return ToolResult(
                     ok=True,
@@ -99,9 +104,7 @@ class CalendarTool(Tool):
                     "start": {"dateTime": start_time},
                     "end": {"dateTime": end_time},
                 }
-                created = service.events().insert(
-                    calendarId=calendar_id, body=event
-                ).execute()
+                created = service.events().insert(calendarId=calendar_id, body=event).execute()
                 return ToolResult(
                     ok=True,
                     data={"event_id": created.get("id"), "html_link": created.get("htmlLink")},

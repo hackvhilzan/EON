@@ -7,6 +7,7 @@ ExecutionFork es el registro durable de una bifurcación de ejecución.
 Preserva la trazabilidad del parent: qué ejecución originó el fork,
 desde qué checkpoint, en qué event_seq, y qué nueva ejecución se creó.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -23,11 +24,11 @@ def _ahora() -> str:
 class ForkStatus(str, Enum):
     """Estado de un fork de ejecución."""
 
-    CREATED = "created"        # Fork creado, ejecución no iniciada
-    RUNNING = "running"        # Ejecución forked en progreso
-    COMPLETED = "completed"    # Ejecución forked finalizada
-    FAILED = "failed"          # Ejecución forked falló
-    ABANDONED = "abandoned"    # Fork descartado sin ejecutar
+    CREATED = "created"  # Fork creado, ejecución no iniciada
+    RUNNING = "running"  # Ejecución forked en progreso
+    COMPLETED = "completed"  # Ejecución forked finalizada
+    FAILED = "failed"  # Ejecución forked falló
+    ABANDONED = "abandoned"  # Fork descartado sin ejecutar
 
 
 @dataclass

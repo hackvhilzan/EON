@@ -25,11 +25,12 @@ Design principles:
 
 from __future__ import annotations
 
+import contextlib
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
-from .runtime import KernelRuntime, KernelRunResult
+from .runtime import KernelRunResult, KernelRuntime
 from .telemetry import MetricsRecorder
 
 
@@ -40,6 +41,7 @@ class IntelligenceConfig:
     All fields default to disabled/opt-out. Setting any to True
     enables that feature.
     """
+
     # Planning
     enable_plan_scoring: bool = False
     enable_plan_simulation: bool = False
@@ -82,18 +84,20 @@ class IntelligenceConfig:
     @property
     def any_enabled(self) -> bool:
         """True if any intelligence feature is enabled."""
-        return any([
-            self.enable_plan_scoring,
-            self.enable_plan_simulation,
-            self.enable_auto_replanning,
-            self.enable_episodic_memory,
-            self.enable_semantic_memory,
-            self.enable_skill_library,
-            self.enable_failure_patterns,
-            self.enable_verification_learning,
-            self.enable_composite_verifier,
-            self.enable_console,
-        ])
+        return any(
+            [
+                self.enable_plan_scoring,
+                self.enable_plan_simulation,
+                self.enable_auto_replanning,
+                self.enable_episodic_memory,
+                self.enable_semantic_memory,
+                self.enable_skill_library,
+                self.enable_failure_patterns,
+                self.enable_verification_learning,
+                self.enable_composite_verifier,
+                self.enable_console,
+            ]
+        )
 
 
 class IntelligenceHooks:
@@ -126,18 +130,21 @@ class IntelligenceHooks:
     def _ensure_plan_scorer(self):
         if self._plan_scorer is None:
             from .planning import PlanScorer
+
             self._plan_scorer = PlanScorer()
         return self._plan_scorer
 
     def _ensure_plan_simulator(self):
         if self._plan_simulator is None:
             from .planning import PlanSimulator
+
             self._plan_simulator = PlanSimulator()
         return self._plan_simulator
 
     def _ensure_auto_replanner(self):
         if self._auto_replanner is None:
             from .planning import AutoReplanner
+
             skills = self._ensure_skill_library() if self._config.enable_skill_library else None
             self._auto_replanner = AutoReplanner(skill_library=skills)
         return self._auto_replanner
@@ -145,12 +152,14 @@ class IntelligenceHooks:
     def _ensure_episodic_store(self):
         if self._episodic_store is None:
             from .memory import EpisodicMemoryStore
+
             self._episodic_store = EpisodicMemoryStore()
         return self._episodic_store
 
     def _ensure_semantic_memory(self):
         if self._semantic_memory is None:
             from .memory import SemanticMemory
+
             store = SemanticMemory.create_backend(
                 backend=self._config.semantic_backend,
                 collection_name=self._config.chroma_collection_name,
@@ -163,18 +172,21 @@ class IntelligenceHooks:
     def _ensure_skill_library(self):
         if self._skill_library is None:
             from .memory import SkillLibrary
+
             self._skill_library = SkillLibrary()
         return self._skill_library
 
     def _ensure_failure_patterns(self):
         if self._failure_patterns is None:
             from .memory import FailurePatterns
+
             self._failure_patterns = FailurePatterns()
         return self._failure_patterns
 
     def _ensure_weight_learner(self):
         if self._weight_learner is None:
             from .memory import VerificationWeightLearner
+
             self._weight_learner = VerificationWeightLearner()
         return self._weight_learner
 
@@ -286,9 +298,7 @@ class IntelligenceHooks:
         Persists episode, registers skill, records failure patterns,
         updates verification weights.
         """
-        self._metrics.increment(
-            "executions.completed" if result_cumple else "executions.failed"
-        )
+        self._metrics.increment("executions.completed" if result_cumple else "executions.failed")
         self._metrics.gauge("execution.confidence", result_confidence)
         self._metrics.gauge("execution.duration", duration_seconds)
         self._metrics.gauge("execution.tasks_total", tasks_total)
@@ -296,8 +306,9 @@ class IntelligenceHooks:
 
         # Episodic memory
         if self._config.enable_episodic_memory:
-            from .memory import Episode
             import uuid as _uuid
+
+            from .memory import Episode
 
             store = self._ensure_episodic_store()
             episode = Episode(
@@ -335,8 +346,9 @@ class IntelligenceHooks:
 
         # Skill library (only on success)
         if self._config.enable_skill_library and result_cumple:
-            from .memory import Skill
             import uuid as _uuid
+
+            from .memory import Skill
 
             lib = self._ensure_skill_library()
             skill = Skill(
@@ -351,11 +363,12 @@ class IntelligenceHooks:
 
         # Failure patterns (only on failure)
         if self._config.enable_failure_patterns and not result_cumple:
-            from .memory import FailureRecord, FailureCategory
             import uuid as _uuid
 
+            from .memory import FailureCategory, FailureRecord
+
             patterns = self._ensure_failure_patterns()
-            for task_id in (failed_task_ids or []):
+            for task_id in failed_task_ids or []:
                 record = FailureRecord(
                     id=str(_uuid.uuid4()),
                     execution_id=execution_id,
@@ -394,10 +407,8 @@ class IntelligenceHooks:
         ]:
             close = getattr(store, "close", None)
             if callable(close):
-                try:
+                with contextlib.suppress(Exception):
                     close()
-                except Exception:
-                    pass
 
 
 class EnhancedKernelRuntime(KernelRuntime):
@@ -519,9 +530,7 @@ class EnhancedKernelRuntime(KernelRuntime):
         """Run the kernel and record intelligence metrics after completion."""
         start_time = time.monotonic()
 
-        result = super().run(
-            descripcion, criterio_de_exito, configuracion, execution_id
-        )
+        result = super().run(descripcion, criterio_de_exito, configuracion, execution_id)
 
         duration = time.monotonic() - start_time
 
@@ -545,14 +554,8 @@ class EnhancedKernelRuntime(KernelRuntime):
             if plan_id:
                 run = self._scheduler_store.obtener(plan_id)
                 tasks_total = len(run.tasks)
-                tasks_completed = sum(
-                    1 for r in run.tasks.values()
-                    if r.estado.value == "completed"
-                )
-                tasks_failed = sum(
-                    1 for r in run.tasks.values()
-                    if r.estado.value == "failed"
-                )
+                tasks_completed = sum(1 for r in run.tasks.values() if r.estado.value == "completed")
+                tasks_failed = sum(1 for r in run.tasks.values() if r.estado.value == "failed")
         except Exception:
             pass
 

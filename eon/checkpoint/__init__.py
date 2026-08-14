@@ -17,6 +17,7 @@ SemanticSnapshot captura el "por qué" del estado, no solo el "qué":
 Recuperación: cargar el último checkpoint válido y replay de eventos
 posteriores a event_seq.
 """
+
 from __future__ import annotations
 
 from .manager import CheckpointManager

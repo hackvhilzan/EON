@@ -8,6 +8,7 @@ Verifica que la estructura básica del resultado es correcta:
 - Los artefactos esperados existen
 - Los tipos de los artefactos son correctos
 """
+
 from __future__ import annotations
 
 from typing import Any

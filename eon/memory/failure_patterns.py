@@ -7,6 +7,7 @@ Cada fallo se categoriza: Task fallida, capability no disponible,
 timeout, rechazo del Verifier. Detecta patrones como "la Tool X
 falla el 30% de las veces con inputs de tipo Y".
 """
+
 from __future__ import annotations
 
 import json
@@ -99,9 +100,13 @@ class FailurePatterns:
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
-                failure.id, failure.execution_id, failure.task_id,
-                failure.capability_id, failure.category,
-                failure.error_message, json.dumps(failure.context),
+                failure.id,
+                failure.execution_id,
+                failure.task_id,
+                failure.capability_id,
+                failure.category,
+                failure.error_message,
+                json.dumps(failure.context),
                 failure.created_at,
             ),
         )

@@ -29,6 +29,7 @@ Uso:
     sync_bus.subscribe("event", sync_handler)
     sync_bus.emit("event", key="value")  # bloquea hasta procesar
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -105,9 +106,7 @@ class AsyncEventBus:
                 if inspect.isawaitable(result):
                     await result
             except Exception:
-                logger.exception(
-                    "Error en handler async del EventBus para evento '%s'", event.name
-                )
+                logger.exception("Error en handler async del EventBus para evento '%s'", event.name)
 
     @property
     def pending_count(self) -> int:
@@ -151,9 +150,7 @@ class SyncEventBusAdapter:
             # Estamos en un loop async: procesar síncronamente para mantener
             # la semántica del EventBus original (los handlers se ejecutan
             # antes de que emit() retorne).
-            asyncio.run_coroutine_threadsafe(
-                self._bus.emit_and_wait(event_name, **data), loop
-            )
+            asyncio.run_coroutine_threadsafe(self._bus.emit_and_wait(event_name, **data), loop)
         except RuntimeError:
             # No hay loop running: crear uno temporal.
             asyncio.run(self._bus.emit_and_wait(event_name, **data))

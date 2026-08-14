@@ -6,6 +6,7 @@ desde el EventStore.
 
 Útil para debugging, demostraciones y entrenamiento.
 """
+
 from __future__ import annotations
 
 import logging
@@ -120,13 +121,15 @@ class ExecutionReplayer:
                 f"Evento: {event.event_type}",
             )
 
-            steps.append(ReplayStep(
-                seq=event.seq,
-                event_type=event.event_type,
-                payload=event.payload if hasattr(event, "payload") else {},
-                timestamp=event.timestamp if hasattr(event, "timestamp") else "",
-                description=desc,
-            ))
+            steps.append(
+                ReplayStep(
+                    seq=event.seq,
+                    event_type=event.event_type,
+                    payload=event.payload if hasattr(event, "payload") else {},
+                    timestamp=event.timestamp if hasattr(event, "timestamp") else "",
+                    description=desc,
+                )
+            )
 
         return ReplayResult(
             execution_id=execution_id,

@@ -9,6 +9,7 @@ Criterios de aceptación:
 - Resume desde interrupt aprobado devuelve estado recuperable
 - Sin SQLite: no rompe compatibilidad
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -38,6 +39,7 @@ def manager(hitl_store: SQLiteHITLStore) -> HITLManager:
 
 
 # ─── HITL Model Tests ──────────────────────────────────────
+
 
 class TestHITLModel:
     def test_create_default(self):
@@ -107,6 +109,7 @@ class TestHITLModel:
 
 # ─── SQLiteHITLStore Tests ─────────────────────────────────
 
+
 class TestSQLiteHITLStore:
     def test_save_and_get(self, hitl_store: SQLiteHITLStore):
         interrupt = HITLInterrupt(
@@ -172,6 +175,7 @@ class TestSQLiteHITLStore:
 
 
 # ─── HITLManager Tests ─────────────────────────────────────
+
 
 class TestHITLManager:
     def test_crear_interrupcion(self, manager: HITLManager):

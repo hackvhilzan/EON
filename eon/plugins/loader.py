@@ -15,6 +15,7 @@ Configuración:
 
 Hot-reload: reload_directory() recarga plugins sin reiniciar el proceso.
 """
+
 from __future__ import annotations
 
 import importlib
@@ -22,7 +23,6 @@ import importlib.util
 import logging
 import sys
 from pathlib import Path
-from typing import Any
 
 from ..tools.base_tool import Tool
 from ..tools.registry import ToolRegistry
@@ -106,12 +106,9 @@ class PluginLoader:
             from importlib.metadata import entry_points
 
             eps = entry_points()
-            # Python 3.12+: entry_points() devuelve EntryPoints (selectable)
-            if hasattr(eps, "select"):
-                eon_eps = eps.select(group="eon.plugins")
-            else:
-                # Python 3.11: entry_points() returns dict
-                eon_eps = eps.get("eon.plugins", [])
+            # Python 3.12+: entry_points() devuelve EntryPoints (selectable);
+            # Python 3.11: entry_points() returns dict
+            eon_eps = eps.select(group="eon.plugins") if hasattr(eps, "select") else eps.get("eon.plugins", [])
 
             for ep in eon_eps:
                 try:
@@ -174,31 +171,23 @@ class PluginLoader:
         """
         dir_path = Path(path)
         # Descargar módulos previos de este directorio
-        to_remove = [
-            name for name, mod_path in self._module_paths.items()
-            if mod_path.parent == dir_path
-        ]
+        to_remove = [name for name, mod_path in self._module_paths.items() if mod_path.parent == dir_path]
         for name in to_remove:
             if name in sys.modules:
                 del sys.modules[name]
             self._module_paths.pop(name, None)
 
         # Remover plugins cuyos módulos fueron descargados y limpiar CAPABILITY_MAP
-        plugins_to_remove = [
-            p for p in self._loaded
-            if self._plugin_to_module.get(p.name, "") in to_remove
-        ]
+        plugins_to_remove = [p for p in self._loaded if self._plugin_to_module.get(p.name, "") in to_remove]
         for p in plugins_to_remove:
             try:
                 from ..capabilities.capability_map import CAPABILITY_MAP
+
                 CAPABILITY_MAP.pop(p.capability_id, None)
             except Exception:
                 pass
             self._plugin_to_module.pop(p.name, None)
-        self._loaded = [
-            p for p in self._loaded
-            if self._plugin_to_module.get(p.name, "") not in to_remove
-        ]
+        self._loaded = [p for p in self._loaded if self._plugin_to_module.get(p.name, "") not in to_remove]
 
         return self.load_directory(dir_path)
 
@@ -263,6 +252,7 @@ class PluginLoader:
         # Registrar capability en el CapabilityMap global
         try:
             from ..capabilities.capability_map import register_plugin as _reg_plugin
+
             _reg_plugin(plugin)
             logger.debug(
                 "Capability %s registrada en CapabilityMap para plugin %s",

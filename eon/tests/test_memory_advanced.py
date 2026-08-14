@@ -9,28 +9,26 @@ Criterios de aceptación:
 - ExecutionReplayer: replay desde EventStore
 - VerificationWeightLearner: record_outcome, compute_weights
 """
-from __future__ import annotations
 
-from pathlib import Path
+from __future__ import annotations
 
 import pytest
 
 from eon.memory import (
     Episode,
     EpisodicMemoryStore,
+    ExecutionReplayer,
+    FailureCategory,
+    FailurePatterns,
     InMemoryVectorStore,
     SemanticMemory,
     Skill,
     SkillLibrary,
-    FailurePatterns,
-    FailureCategory,
-    ExecutionReplayer,
     VerificationWeightLearner,
 )
 from eon.memory.semantic import HashingEmbedder
 from eon.persistence import SQLiteEngine
 from eon.persistence.event_store import EventStore
-
 
 # ─── EpisodicMemory Tests ────────────────────────────────
 
@@ -63,10 +61,12 @@ class TestEpisodicMemory:
     def test_list_all(self, tmp_path):
         store = EpisodicMemoryStore(db_path=str(tmp_path / "ep.db"))
         for i in range(5):
-            store.save(Episode(
-                execution_id=f"exec-{i}",
-                objective_description=f"Objetivo {i}",
-            ))
+            store.save(
+                Episode(
+                    execution_id=f"exec-{i}",
+                    objective_description=f"Objetivo {i}",
+                )
+            )
         assert store.count() == 5
         episodes = store.list_all()
         assert len(episodes) == 5
@@ -74,21 +74,27 @@ class TestEpisodicMemory:
 
     def test_search_similar(self, tmp_path):
         store = EpisodicMemoryStore(db_path=str(tmp_path / "ep.db"))
-        store.save(Episode(
-            execution_id="exec-1",
-            objective_description="Generar informe de ventas Q3 en PDF",
-            result_cumple=True,
-        ))
-        store.save(Episode(
-            execution_id="exec-2",
-            objective_description="Enviar email al cliente",
-            result_cumple=True,
-        ))
-        store.save(Episode(
-            execution_id="exec-3",
-            objective_description="Crear informe trimestral de ventas",
-            result_cumple=True,
-        ))
+        store.save(
+            Episode(
+                execution_id="exec-1",
+                objective_description="Generar informe de ventas Q3 en PDF",
+                result_cumple=True,
+            )
+        )
+        store.save(
+            Episode(
+                execution_id="exec-2",
+                objective_description="Enviar email al cliente",
+                result_cumple=True,
+            )
+        )
+        store.save(
+            Episode(
+                execution_id="exec-3",
+                objective_description="Crear informe trimestral de ventas",
+                result_cumple=True,
+            )
+        )
 
         results = store.search_similar("informe de ventas")
         assert len(results) > 0
@@ -98,16 +104,20 @@ class TestEpisodicMemory:
 
     def test_search_similar_only_successful(self, tmp_path):
         store = EpisodicMemoryStore(db_path=str(tmp_path / "ep.db"))
-        store.save(Episode(
-            execution_id="exec-1",
-            objective_description="Generar informe de ventas",
-            result_cumple=True,
-        ))
-        store.save(Episode(
-            execution_id="exec-2",
-            objective_description="Generar informe de ventas",
-            result_cumple=False,
-        ))
+        store.save(
+            Episode(
+                execution_id="exec-1",
+                objective_description="Generar informe de ventas",
+                result_cumple=True,
+            )
+        )
+        store.save(
+            Episode(
+                execution_id="exec-2",
+                objective_description="Generar informe de ventas",
+                result_cumple=False,
+            )
+        )
 
         results = store.search_similar("informe de ventas", only_successful=True)
         assert all(r.result_cumple for r in results)
@@ -192,16 +202,20 @@ class TestSkillLibrary:
 
     def test_match_finds_similar(self, tmp_path):
         lib = SkillLibrary(db_path=str(tmp_path / "skills.db"))
-        lib.register(Skill(
-            name="informe_ventas",
-            objective_pattern="Generar informe de ventas trimestrales",
-            success_count=5,
-        ))
-        lib.register(Skill(
-            name="email_cliente",
-            objective_pattern="Enviar email al cliente",
-            success_count=2,
-        ))
+        lib.register(
+            Skill(
+                name="informe_ventas",
+                objective_pattern="Generar informe de ventas trimestrales",
+                success_count=5,
+            )
+        )
+        lib.register(
+            Skill(
+                name="email_cliente",
+                objective_pattern="Enviar email al cliente",
+                success_count=2,
+            )
+        )
 
         match = lib.match("Generar informe de ventas Q3")
         assert match is not None
@@ -211,11 +225,13 @@ class TestSkillLibrary:
 
     def test_match_no_result(self, tmp_path):
         lib = SkillLibrary(db_path=str(tmp_path / "skills.db"))
-        lib.register(Skill(
-            name="skill1",
-            objective_pattern="Completamente diferente",
-            success_count=1,
-        ))
+        lib.register(
+            Skill(
+                name="skill1",
+                objective_pattern="Completamente diferente",
+                success_count=1,
+            )
+        )
 
         match = lib.match("generar informe de ventas")
         # Debe tener baja similitud o None
@@ -224,10 +240,12 @@ class TestSkillLibrary:
 
     def test_record_success_and_failure(self, tmp_path):
         lib = SkillLibrary(db_path=str(tmp_path / "skills.db"))
-        skill = lib.register(Skill(
-            name="test_skill",
-            objective_pattern="test pattern",
-        ))
+        skill = lib.register(
+            Skill(
+                name="test_skill",
+                objective_pattern="test pattern",
+            )
+        )
 
         lib.record_success(skill.id)
         lib.record_success(skill.id)
@@ -236,7 +254,7 @@ class TestSkillLibrary:
         retrieved = lib.get(skill.id)
         assert retrieved.success_count == 2
         assert retrieved.fail_count == 1
-        assert retrieved.success_rate == pytest.approx(2/3)
+        assert retrieved.success_rate == pytest.approx(2 / 3)
         lib.close()
 
     def test_persistence(self, tmp_path):
@@ -256,37 +274,54 @@ class TestSkillLibrary:
 class TestFailurePatterns:
     def test_record_and_stats(self, tmp_path):
         fp = FailurePatterns(db_path=str(tmp_path / "fail.db"))
-        fp.record(type("F", (), {
-            "id": "", "execution_id": "exec-1", "task_id": "task-1",
-            "capability_id": "tool.python", "category": FailureCategory.TIMEOUT.value,
-            "error_message": "Timeout after 30s", "context": {},
-            "created_at": "",
-        })())
+        fp.record(
+            type(
+                "F",
+                (),
+                {
+                    "id": "",
+                    "execution_id": "exec-1",
+                    "task_id": "task-1",
+                    "capability_id": "tool.python",
+                    "category": FailureCategory.TIMEOUT.value,
+                    "error_message": "Timeout after 30s",
+                    "context": {},
+                    "created_at": "",
+                },
+            )()
+        )
         # The above is a hack; use proper record
         fp2 = FailurePatterns(db_path=str(tmp_path / "fail2.db"))
 
         from eon.memory.failure_patterns import FailureRecord
-        fp2.record(FailureRecord(
-            execution_id="exec-1",
-            task_id="task-1",
-            capability_id="tool.python",
-            category=FailureCategory.TIMEOUT.value,
-            error_message="Timeout after 30s",
-        ))
-        fp2.record(FailureRecord(
-            execution_id="exec-1",
-            task_id="task-2",
-            capability_id="tool.python",
-            category=FailureCategory.TASK_FAILED.value,
-            error_message="Assertion error",
-        ))
-        fp2.record(FailureRecord(
-            execution_id="exec-2",
-            task_id="task-3",
-            capability_id="tool.llm",
-            category=FailureCategory.LLM_ERROR.value,
-            error_message="API rate limit",
-        ))
+
+        fp2.record(
+            FailureRecord(
+                execution_id="exec-1",
+                task_id="task-1",
+                capability_id="tool.python",
+                category=FailureCategory.TIMEOUT.value,
+                error_message="Timeout after 30s",
+            )
+        )
+        fp2.record(
+            FailureRecord(
+                execution_id="exec-1",
+                task_id="task-2",
+                capability_id="tool.python",
+                category=FailureCategory.TASK_FAILED.value,
+                error_message="Assertion error",
+            )
+        )
+        fp2.record(
+            FailureRecord(
+                execution_id="exec-2",
+                task_id="task-3",
+                capability_id="tool.llm",
+                category=FailureCategory.LLM_ERROR.value,
+                error_message="API rate limit",
+            )
+        )
 
         stats = fp2.get_stats()
         assert stats["total"] == 3
@@ -300,18 +335,22 @@ class TestFailurePatterns:
 
         fp = FailurePatterns(db_path=str(tmp_path / "fail.db"))
         for i in range(5):
-            fp.record(FailureRecord(
-                execution_id=f"exec-{i}",
+            fp.record(
+                FailureRecord(
+                    execution_id=f"exec-{i}",
+                    capability_id="tool.python",
+                    category=FailureCategory.TIMEOUT.value,
+                    error_message="Timeout after 30s",
+                )
+            )
+        fp.record(
+            FailureRecord(
+                execution_id="exec-5",
                 capability_id="tool.python",
-                category=FailureCategory.TIMEOUT.value,
-                error_message="Timeout after 30s",
-            ))
-        fp.record(FailureRecord(
-            execution_id="exec-5",
-            capability_id="tool.python",
-            category=FailureCategory.TASK_FAILED.value,
-            error_message="Different error",
-        ))
+                category=FailureCategory.TASK_FAILED.value,
+                error_message="Different error",
+            )
+        )
 
         patterns = fp.get_patterns("tool.python")
         assert patterns["total_failures"] == 6
@@ -324,10 +363,12 @@ class TestFailurePatterns:
 
         fp = FailurePatterns(db_path=str(tmp_path / "fail.db"))
         for _ in range(3):
-            fp.record(FailureRecord(
-                capability_id="tool.python",
-                category=FailureCategory.TIMEOUT.value,
-            ))
+            fp.record(
+                FailureRecord(
+                    capability_id="tool.python",
+                    category=FailureCategory.TIMEOUT.value,
+                )
+            )
 
         rate = fp.get_failure_rate("tool.python", total_calls=10)
         assert rate == pytest.approx(0.3)
@@ -435,7 +476,7 @@ class TestVerificationWeightLearner:
         learner.record_outcome("exec-3", "llm_judge", 0.7, False)
 
         accuracy = learner.get_accuracy("llm_judge")
-        assert accuracy == pytest.approx(2/3)
+        assert accuracy == pytest.approx(2 / 3)
         learner.close()
 
     def test_decay(self, tmp_path):

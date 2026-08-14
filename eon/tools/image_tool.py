@@ -5,10 +5,10 @@ ImageTool — manipulación básica de imágenes.
 
 Dependencia opcional: Pillow (PIL)
 """
+
 from __future__ import annotations
 
 import logging
-from pathlib import Path
 from typing import Any
 
 from .base_tool import Tool, ToolResult

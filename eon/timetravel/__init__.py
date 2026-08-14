@@ -16,6 +16,7 @@ Filosofía de reconstrucción (honestidad sobre completitud):
 - Se registran applied_events vs unapplied_events para transparencia.
 - La reconstrucción es read-only: nunca muta stores reales.
 """
+
 from __future__ import annotations
 
 from .machine import TimeMachine

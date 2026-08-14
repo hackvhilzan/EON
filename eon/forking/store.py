@@ -9,6 +9,7 @@ Tabla: execution_forks
   - new_execution_id TEXT (indexado)
   - data TEXT (JSON completo)
 """
+
 from __future__ import annotations
 
 import json
@@ -65,9 +66,7 @@ class SQLiteForkStore:
         return fork
 
     def get(self, fork_id: str) -> ExecutionFork | None:
-        row = self._engine.query_one(
-            "SELECT data FROM execution_forks WHERE id = ?", (fork_id,)
-        )
+        row = self._engine.query_one("SELECT data FROM execution_forks WHERE id = ?", (fork_id,))
         if row is None:
             return None
         return ExecutionFork.from_dict(json.loads(row["data"]))
@@ -75,8 +74,7 @@ class SQLiteForkStore:
     def list_for_parent(self, parent_execution_id: str) -> list[ExecutionFork]:
         """Lista todos los forks de una ejecución parent."""
         rows = self._engine.query_all(
-            "SELECT data FROM execution_forks WHERE parent_execution_id = ? "
-            "ORDER BY created_at ASC",
+            "SELECT data FROM execution_forks WHERE parent_execution_id = ? ORDER BY created_at ASC",
             (parent_execution_id,),
         )
         return [ExecutionFork.from_dict(json.loads(r["data"])) for r in rows]
@@ -93,14 +91,10 @@ class SQLiteForkStore:
 
     def list_all(self) -> list[ExecutionFork]:
         """Lista todos los forks."""
-        rows = self._engine.query_all(
-            "SELECT data FROM execution_forks ORDER BY created_at DESC"
-        )
+        rows = self._engine.query_all("SELECT data FROM execution_forks ORDER BY created_at DESC")
         return [ExecutionFork.from_dict(json.loads(r["data"])) for r in rows]
 
-    def update_status(
-        self, fork_id: str, status: str, completed_at: str | None = None
-    ) -> bool:
+    def update_status(self, fork_id: str, status: str, completed_at: str | None = None) -> bool:
         """Actualiza el estado de un fork."""
         fork = self.get(fork_id)
         if fork is None:

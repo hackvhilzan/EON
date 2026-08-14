@@ -6,6 +6,7 @@ ToolPlugin — base para plugins de Tools custom.
 Un plugin empaqueta una Tool con sus metadatos de gobernanza.
 Permite registrar Tools custom sin tocar el código del core.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field

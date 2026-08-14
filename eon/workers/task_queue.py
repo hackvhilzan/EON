@@ -23,6 +23,7 @@ Uso:
     entry = queue.lease(worker_id="w1", timeout_seconds=30)
     queue.complete("t1", result={"ok": True})
 """
+
 from __future__ import annotations
 
 import json
@@ -215,9 +216,7 @@ class SQLiteTaskQueue:
             )
         else:
             row = self._engine.query_one(
-                "SELECT data FROM task_queue "
-                "WHERE estado = ? AND available_at <= ? "
-                "ORDER BY available_at ASC LIMIT 1",
+                "SELECT data FROM task_queue WHERE estado = ? AND available_at <= ? ORDER BY available_at ASC LIMIT 1",
                 (TaskQueueState.PENDING.value, now_iso),
             )
 
@@ -292,9 +291,7 @@ class SQLiteTaskQueue:
         return True
 
     def get(self, task_id: str) -> TaskEntry | None:
-        row = self._engine.query_one(
-            "SELECT data FROM task_queue WHERE task_id = ?", (task_id,)
-        )
+        row = self._engine.query_one("SELECT data FROM task_queue WHERE task_id = ?", (task_id,))
         if row is None:
             return None
         return TaskEntry.from_dict(json.loads(row["data"]))

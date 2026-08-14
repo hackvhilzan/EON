@@ -5,6 +5,7 @@ PDFTool — lectura/escritura de PDFs.
 
 Dependencias opcionales: pypdf (lectura), reportlab (escritura)
 """
+
 from __future__ import annotations
 
 import logging

@@ -4,6 +4,7 @@ Tests de persistencia SQLite para Fase 1.
 Patrón: create → close → reopen → verify
 Verifica que el estado sobrevive un reinicio de proceso.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -29,6 +30,7 @@ from eon.workspace.models import Workspace
 
 # ─── Fixtures ─────────────────────────────────────────────
 
+
 @pytest.fixture
 def tmp_db(tmp_path: Path) -> Path:
     return tmp_path / "test_eon.db"
@@ -42,6 +44,7 @@ def stores(tmp_db: Path):
 
 
 # ─── Objective Store ───────────────────────────────────────
+
 
 class TestSQLiteObjectiveStore:
     def test_create_and_get(self, stores):
@@ -134,6 +137,7 @@ class TestSQLiteObjectiveStore:
 
 # ─── Planner Store ─────────────────────────────────────────
 
+
 class TestSQLitePlannerStore:
     def test_create_and_get(self, stores):
         task = Task(capability_id="code.write", id="t1")
@@ -176,6 +180,7 @@ class TestSQLitePlannerStore:
 
 
 # ─── Scheduler Store ───────────────────────────────────────
+
 
 class TestSQLiteSchedulerStore:
     def test_crear_and_obtener(self, stores):
@@ -231,6 +236,7 @@ class TestSQLiteSchedulerStore:
 
 # ─── Workspace Store ───────────────────────────────────────
 
+
 class TestSQLiteWorkspaceStore:
     def test_create_and_get(self, stores):
         ws = Workspace(objective_id="obj-1")
@@ -260,6 +266,7 @@ class TestSQLiteWorkspaceStore:
 
 # ─── Package Store ─────────────────────────────────────────
 
+
 class TestSQLitePackageStore:
     def test_create_and_get(self, stores):
         pkg = Package(workspace_id="ws-1")
@@ -282,6 +289,7 @@ class TestSQLitePackageStore:
 
 
 # ─── Worker Store ──────────────────────────────────────────
+
 
 class TestSQLiteWorkerStore:
     def test_create_and_get(self, stores):
@@ -316,6 +324,7 @@ class TestSQLiteWorkerStore:
 
 # ─── Coordinator Store ─────────────────────────────────────
 
+
 class TestSQLiteCoordinatorStore:
     def test_create_and_get(self, stores):
         exec_model = CoordinatorExecution(
@@ -348,6 +357,7 @@ class TestSQLiteCoordinatorStore:
 
 
 # ─── EventStore ────────────────────────────────────────────
+
 
 class TestEventStore:
     def test_append_and_get(self, stores):
@@ -395,6 +405,7 @@ class TestEventStore:
 
 
 # ─── Integration: KernelRuntime with SQLite ────────────────
+
 
 class TestKernelRuntimeSQLite:
     def test_runtime_with_sqlite(self, tmp_path: Path):

@@ -11,6 +11,7 @@ Uso:
         async def execute(self, query: str) -> ToolResult:
             ...
 """
+
 from __future__ import annotations
 
 # Re-export de las interfaces que un autor de plugin necesita

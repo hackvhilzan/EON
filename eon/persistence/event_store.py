@@ -12,6 +12,7 @@ ANTES de notificar a los subscribers. Si el proceso muere tras
 escribir el evento pero antes de notificar, al reiniciar se puede
 replay el evento.
 """
+
 from __future__ import annotations
 
 import json

@@ -9,6 +9,7 @@ NO es un simple retry. El replanner:
 3. Sugiere un plan alternativo modificando la task fallida
 4. Aumenta attempt_number y evita repetir el mismo error
 """
+
 from __future__ import annotations
 
 import logging
@@ -153,7 +154,7 @@ class AutoReplanner:
 
         elif strategy == "retry_with_backoff":
             base_task["description"] = f"Reintentar {context.failed_task_id} con backoff"
-            base_task["backoff_seconds"] = 5 * (2 ** context.attempt_number)
+            base_task["backoff_seconds"] = 5 * (2**context.attempt_number)
             tasks.append(base_task)
 
         elif strategy == "fix_and_retry":

@@ -3,6 +3,7 @@ eon.planning.models
 ======================
 Modelos de datos para planificación inteligente.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -14,11 +15,11 @@ class PlanScore:
     """Puntuación de un plan por el PlanScorer."""
 
     plan_id: str = ""
-    total_score: float = 0.0           # 0..1, mayor = mejor
-    efficiency: float = 0.0             # menos tasks/deps = mejor
-    robustness: float = 0.5             # con fallbacks = mejor
-    coverage: float = 0.5              # cubre el criterio de éxito
-    simplicity: float = 0.5            # menos dependencias = mejor
+    total_score: float = 0.0  # 0..1, mayor = mejor
+    efficiency: float = 0.0  # menos tasks/deps = mejor
+    robustness: float = 0.5  # con fallbacks = mejor
+    coverage: float = 0.5  # cubre el criterio de éxito
+    simplicity: float = 0.5  # menos dependencias = mejor
     details: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:

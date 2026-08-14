@@ -48,6 +48,7 @@ class ToolRegistry:
         Maneja tanto close() síncrono como async (ej. BrowserTool).
         """
         import inspect
+
         for tool in self._tools.values():
             close = getattr(tool, "close", None)
             if not callable(close):
@@ -74,6 +75,7 @@ class ToolRegistry:
         """
         # FilesystemTool — sin dependencias externas
         from .filesystem_tool import FilesystemTool
+
         self.register(FilesystemTool())
 
         # Tools con dependencias opcionales
@@ -112,6 +114,7 @@ class ToolRegistry:
         Las Tools de los plugins se registran en este registry.
         """
         from ..plugins import PluginLoader
+
         loader = PluginLoader(self)
         loader.discover(plugins_dir=plugins_dir)
         return self

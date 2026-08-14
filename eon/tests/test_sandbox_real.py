@@ -9,6 +9,7 @@ Criterios de aceptación:
 - Env: una variable secreta del host no aparece en el child
 - Network denied: run_python con socket bloqueado
 """
+
 from __future__ import annotations
 
 import os
@@ -27,6 +28,7 @@ def executor(tmp_path: Path) -> SandboxExecutor:
 
 
 # ─── Basic execution ──────────────────────────────────────
+
 
 class TestSandboxBasic:
     def test_simple_python(self, executor: SandboxExecutor):
@@ -53,6 +55,7 @@ class TestSandboxBasic:
 
 
 # ─── Timeout ─────────────────────────────────────────────
+
 
 class TestSandboxTimeout:
     def test_timeout_kills_process(self, executor: SandboxExecutor):
@@ -83,6 +86,7 @@ class TestSandboxTimeout:
 
 # ─── Resource limits ──────────────────────────────────────
 
+
 class TestSandboxResourceLimits:
     def test_memory_limit(self, executor: SandboxExecutor):
         profile = SandboxProfile(
@@ -112,6 +116,7 @@ class TestSandboxResourceLimits:
 
 # ─── Filesystem isolation ─────────────────────────────────
 
+
 class TestSandboxFilesystem:
     def test_writes_within_sandbox(self, executor: SandboxExecutor):
         result = executor.run_python(
@@ -136,6 +141,7 @@ class TestSandboxFilesystem:
 
 
 # ─── Env isolation ───────────────────────────────────────
+
 
 class TestSandboxEnv:
     def test_secret_not_inherited(self, executor: SandboxExecutor):
@@ -169,6 +175,7 @@ class TestSandboxEnv:
 
 
 # ─── Network blocking ─────────────────────────────────────
+
 
 class TestSandboxNetwork:
     def test_network_blocked_for_python(self, executor: SandboxExecutor):
@@ -209,6 +216,7 @@ except Exception as e:
 
 
 # ─── Run command ──────────────────────────────────────────
+
 
 class TestSandboxCommand:
     def test_run_echo(self, executor: SandboxExecutor):

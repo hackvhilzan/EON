@@ -12,15 +12,12 @@ from __future__ import annotations
 
 import json
 import ssl
-import time
 import urllib.request
-from typing import Any
 
 import pytest
 
 from eon.llm.base import LLM
 from eon.telemetry import MetricsRecorder, get_default_recorder
-
 
 # ─── Block 5: Telemetry ──────────────────────────────────────
 
@@ -77,6 +74,7 @@ class TestTelemetry:
         import threading
 
         recorder = MetricsRecorder()
+
         def worker():
             for _ in range(100):
                 recorder.increment("thread.counter")
@@ -99,6 +97,7 @@ class TestTelemetry:
 
 class FakeLLM(LLM):
     """Fake LLM for testing — returns canned responses."""
+
     name = "fake"
 
     def __init__(self, response: str = "") -> None:
@@ -152,6 +151,7 @@ class TestLLMJudgeAdapter:
 
         class CrashingLLM(LLM):
             name = "crash"
+
             def generate(self, prompt: str) -> str:
                 raise RuntimeError("LLM unavailable")
 
@@ -208,6 +208,7 @@ class TestDecomposerLLMAdapter:
 
         class CrashLLM(LLM):
             name = "crash"
+
             def generate(self, prompt: str) -> str:
                 raise RuntimeError("fail")
 
@@ -232,7 +233,7 @@ class TestChromaBackend:
 
     def test_create_backend_chroma_fallback(self):
         """If chromadb not installed, falls back to InMemoryVectorStore."""
-        from eon.memory import SemanticMemory, InMemoryVectorStore
+        from eon.memory import InMemoryVectorStore, SemanticMemory
 
         store = SemanticMemory.create_backend(backend="chroma")
         # Should fall back to InMemoryVectorStore if chromadb not installed,
@@ -243,11 +244,13 @@ class TestChromaBackend:
         """ChromaVectorStore raises ImportError with helpful message."""
         try:
             import chromadb  # noqa: F401
+
             pytest.skip("chromadb is installed, skipping import error test")
         except ImportError:
             pass
 
         from eon.memory.chroma_backend import ChromaVectorStore
+
         with pytest.raises(ImportError, match="chromadb"):
             ChromaVectorStore()
 
@@ -266,6 +269,7 @@ def _chroma_available() -> bool:
     """Check if chromadb is installed and importable."""
     try:
         import chromadb  # noqa: F401
+
         return True
     except ImportError:
         return False
@@ -436,6 +440,7 @@ class TestChromaVectorStore:
             pytest.skip("chromadb not installed")
 
         import os
+
         from eon.memory.chroma_backend import ChromaVectorStore
 
         chroma_path = str(tmp_path / "chroma_destroy")
@@ -461,14 +466,18 @@ class TestChromaVectorStore:
             persist_path=str(tmp_path / "chroma_meta"),
         )
         try:
-            store.add("m-1", "test", {
-                "str_val": "hello",
-                "int_val": 42,
-                "float_val": 3.14,
-                "bool_val": True,
-                "list_val": [1, 2, 3],  # Should become string
-                "none_val": None,  # Should be skipped
-            })
+            store.add(
+                "m-1",
+                "test",
+                {
+                    "str_val": "hello",
+                    "int_val": 42,
+                    "float_val": 3.14,
+                    "bool_val": True,
+                    "list_val": [1, 2, 3],  # Should become string
+                    "none_val": None,  # Should be skipped
+                },
+            )
             assert store.count == 1
 
             results = store.search("test", limit=1)
@@ -644,6 +653,7 @@ class TestEnhancedKernelRuntimeChroma:
             runtime.close()
             # Clean up chroma
             import shutil
+
             if __import__("os").path.exists(chroma_path):
                 shutil.rmtree(chroma_path, ignore_errors=True)
 
@@ -948,7 +958,7 @@ class TestConsoleServer:
     """Tests for ConsoleServer."""
 
     def _make_runtime(self, tmp_path):
-        from eon.intelligence import EnhancedKernelRuntime
+        from eon.intelligence import EnhancedKernelRuntime, IntelligenceConfig
 
         runtime = EnhancedKernelRuntime(
             root=str(tmp_path / "eon"),
@@ -1072,7 +1082,8 @@ class TestConsoleAuth:
 
         runtime = KernelRuntime(root=str(tmp_path / "eon"))
         server = ConsoleServer(
-            runtime=runtime, port=18093,
+            runtime=runtime,
+            port=18093,
             auth_token="secret-token-123",
         )
         try:
@@ -1091,7 +1102,8 @@ class TestConsoleAuth:
 
         runtime = KernelRuntime(root=str(tmp_path / "eon"))
         server = ConsoleServer(
-            runtime=runtime, port=18092,
+            runtime=runtime,
+            port=18092,
             auth_token="secret-token-123",
         )
         try:
@@ -1115,7 +1127,8 @@ class TestConsoleAuth:
 
         runtime = KernelRuntime(root=str(tmp_path / "eon"))
         server = ConsoleServer(
-            runtime=runtime, port=18091,
+            runtime=runtime,
+            port=18091,
             auth_token="secret-token-123",
         )
         try:
@@ -1137,7 +1150,8 @@ class TestConsoleAuth:
 
         runtime = KernelRuntime(root=str(tmp_path / "eon"))
         server = ConsoleServer(
-            runtime=runtime, port=18090,
+            runtime=runtime,
+            port=18090,
             auth_token="secret-token-123",
         )
         try:
@@ -1164,7 +1178,8 @@ class TestConsoleAuth:
 
         runtime = KernelRuntime(root=str(tmp_path / "eon"))
         server = ConsoleServer(
-            runtime=runtime, port=18089,
+            runtime=runtime,
+            port=18089,
             auth_token="secret-token-123",
         )
         try:
@@ -1191,7 +1206,8 @@ class TestConsoleAuth:
 
         runtime = KernelRuntime(root=str(tmp_path / "eon"))
         server = ConsoleServer(
-            runtime=runtime, port=18088,
+            runtime=runtime,
+            port=18088,
             auth_tokens=["token-a", "token-b"],
         )
         try:
@@ -1270,7 +1286,8 @@ class TestConsoleTLS:
 
         runtime = KernelRuntime(root=str(tmp_path / "eon"))
         server = ConsoleServer(
-            runtime=runtime, port=18084,
+            runtime=runtime,
+            port=18084,
             tls_certfile=certfile,
             tls_keyfile=keyfile,
             tls_auto_generate=True,
@@ -1282,6 +1299,7 @@ class TestConsoleTLS:
             assert server.url.startswith("https://")
             # Verificar que los archivos existen
             import os
+
             assert os.path.exists(certfile)
             assert os.path.exists(keyfile)
         finally:
@@ -1297,7 +1315,8 @@ class TestConsoleTLS:
 
         runtime = KernelRuntime(root=str(tmp_path / "eon"))
         server = ConsoleServer(
-            runtime=runtime, port=18083,
+            runtime=runtime,
+            port=18083,
             tls_certfile=certfile,
             tls_keyfile=keyfile,
             tls_auto_generate=True,
@@ -1332,7 +1351,8 @@ class TestConsoleTLS:
 
         runtime = KernelRuntime(root=str(tmp_path / "eon"))
         server = ConsoleServer(
-            runtime=runtime, port=18082,
+            runtime=runtime,
+            port=18082,
             auth_token="tls-secret-token",
             tls_certfile=certfile,
             tls_keyfile=keyfile,
@@ -1353,7 +1373,8 @@ class TestConsoleTLS:
             # /health funciona sin token
             resp = urllib.request.urlopen(
                 "https://127.0.0.1:18082/health",
-                timeout=5, context=ctx,
+                timeout=5,
+                context=ctx,
             )
             assert json.loads(resp.read())["status"] == "ok"
 
@@ -1361,7 +1382,8 @@ class TestConsoleTLS:
             try:
                 urllib.request.urlopen(
                     "https://127.0.0.1:18082/executions",
-                    timeout=5, context=ctx,
+                    timeout=5,
+                    context=ctx,
                 )
                 pytest.fail("Should 401")
             except urllib.error.HTTPError as e:
@@ -1437,8 +1459,9 @@ class TestTLSCertGenerator:
     """Tests for TLSCertGenerator."""
 
     def test_generate_self_signed(self, tmp_path):
-        from eon.console import TLSCertGenerator
         import os
+
+        from eon.console import TLSCertGenerator
 
         certfile = str(tmp_path / "test_cert.pem")
         keyfile = str(tmp_path / "test_key.pem")

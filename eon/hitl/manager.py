@@ -3,6 +3,7 @@ eon.hitl.manager
 =================
 HITLManager — orquesta interrupciones, aprobaciones y reanudación.
 """
+
 from __future__ import annotations
 
 import logging
@@ -179,9 +180,7 @@ class HITLManager:
             return None
 
         if interrupt.status != HITLStatus.APPROVED:
-            raise ValueError(
-                f"No se puede reanudar: estado actual es {interrupt.status.value}"
-            )
+            raise ValueError(f"No se puede reanudar: estado actual es {interrupt.status.value}")
 
         interrupt.transition_to(HITLStatus.RESUMED)
         self._store.update(interrupt)
@@ -189,9 +188,7 @@ class HITLManager:
         # Recuperar contexto del checkpoint si existe
         checkpoint_state: dict | None = None
         if interrupt.checkpoint_id and self._checkpoint_manager is not None:
-            checkpoint_state = self._checkpoint_manager.recuperar_desde_checkpoint(
-                interrupt.checkpoint_id
-            )
+            checkpoint_state = self._checkpoint_manager.recuperar_desde_checkpoint(interrupt.checkpoint_id)
 
         if self._event_store is not None:
             self._event_store.append(

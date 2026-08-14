@@ -6,9 +6,9 @@ Layer 2: CriteriaVerifier.
 Parsea el criterio_de_exito del objetivo y lo verifica si es medible.
 Soporta criterios estructurados y expresiones simples.
 """
+
 from __future__ import annotations
 
-import os
 import re
 from typing import Any
 
@@ -60,9 +60,7 @@ class CriteriaVerifier:
             tipo = crit.get("tipo", "")
             if tipo == "artefacto_existe":
                 path = crit.get("path", "")
-                exists = path in artifacts or (
-                    artifacts and any(path in str(a) for a in artifacts.values())
-                )
+                exists = path in artifacts or (artifacts and any(path in str(a) for a in artifacts.values()))
                 results.append((tipo, exists, f"Artefacto {path}: {'existe' if exists else 'no existe'}"))
             elif tipo == "tamano_minimo":
                 path = crit.get("path", "")
@@ -72,7 +70,6 @@ class CriteriaVerifier:
                 results.append((tipo, size >= min_bytes, f"{path}: {size} >= {min_bytes} bytes"))
             elif tipo == "tipo_mime":
                 path = crit.get("path", "")
-                expected = crit.get("esperado", "")
                 results.append((tipo, True, f"Verificación MIME no implementada para {path}"))
 
         all_passed = all(r[1] for r in results)

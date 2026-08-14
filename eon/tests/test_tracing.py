@@ -8,6 +8,7 @@ Criterios de aceptación:
 - Runtime crea trace por ejecución
 - Sin SQLite: tracing no rompe compatibilidad
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -37,6 +38,7 @@ def tracer(trace_store: SQLiteTraceStore) -> Tracer:
 
 
 # ─── Span Model Tests ──────────────────────────────────────
+
 
 class TestSpanModel:
     def test_create_default(self):
@@ -82,6 +84,7 @@ class TestSpanModel:
 
 
 # ─── SQLiteTraceStore Tests ────────────────────────────────
+
 
 class TestSQLiteTraceStore:
     def test_save_and_get_trace(self, trace_store: SQLiteTraceStore):
@@ -135,6 +138,7 @@ class TestSQLiteTraceStore:
 
 
 # ─── Tracer Tests ──────────────────────────────────────────
+
 
 class TestTracer:
     def test_start_span_context_manager(self, tracer: Tracer):

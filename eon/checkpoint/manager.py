@@ -13,6 +13,7 @@ Políticas de auto-checkpoint:
 - "milestone": en hitos (plan creado, task completada, ejecución finalizada)
 - "every_task": después de cada task
 """
+
 from __future__ import annotations
 
 import logging
@@ -207,9 +208,7 @@ class CheckpointManager:
         """Lista todos los checkpoints de una ejecución."""
         return self._store.list_for_execution(execution_id)
 
-    def recuperar_desde_checkpoint(
-        self, checkpoint_id: str
-    ) -> dict[str, Any] | None:
+    def recuperar_desde_checkpoint(self, checkpoint_id: str) -> dict[str, Any] | None:
         """Recupera el estado desde un checkpoint (read-only).
 
         Devuelve un dict con:

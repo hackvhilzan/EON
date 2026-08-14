@@ -14,6 +14,7 @@ Aislamiento degradable (best-effort):
 - Network: socket blocking para Python via sitecustomize.py inyectado
   Para comandos no-Python, se marca network_isolation_enforced=False
 """
+
 from __future__ import annotations
 
 import contextlib
@@ -108,9 +109,7 @@ class SandboxExecutor:
         profile = profile or SandboxProfile.workspace_only()
 
         # Crear temp dir aislado
-        sandbox_root = tempfile.mkdtemp(
-            prefix="eon_sb_", dir=str(self._base_temp)
-        )
+        sandbox_root = tempfile.mkdtemp(prefix="eon_sb_", dir=str(self._base_temp))
 
         # Escribir el código a un archivo
         script_path = Path(sandbox_root) / "_sandbox_script.py"
@@ -149,9 +148,7 @@ class SandboxExecutor:
                 text=True,
             )
             try:
-                stdout, stderr = proc.communicate(
-                    timeout=profile.max_duration_seconds
-                )
+                stdout, stderr = proc.communicate(timeout=profile.max_duration_seconds)
             except subprocess.TimeoutExpired:
                 # Matar todo el process group
                 self._kill_process_group(proc.pid)
@@ -219,9 +216,7 @@ class SandboxExecutor:
             profile: Perfil de sandbox.
         """
         profile = profile or SandboxProfile.workspace_only()
-        sandbox_root = tempfile.mkdtemp(
-            prefix="eon_cmd_", dir=str(self._base_temp)
-        )
+        sandbox_root = tempfile.mkdtemp(prefix="eon_cmd_", dir=str(self._base_temp))
         env = self._build_env(profile, sandbox_root)
 
         def _preexec() -> None:
@@ -242,9 +237,7 @@ class SandboxExecutor:
                 text=True,
             )
             try:
-                stdout, stderr = proc.communicate(
-                    timeout=profile.max_duration_seconds
-                )
+                stdout, stderr = proc.communicate(timeout=profile.max_duration_seconds)
             except subprocess.TimeoutExpired:
                 self._kill_process_group(proc.pid)
                 try:
@@ -289,9 +282,7 @@ class SandboxExecutor:
         finally:
             shutil.rmtree(sandbox_root, ignore_errors=True)
 
-    def _build_env(
-        self, profile: SandboxProfile, sandbox_root: str
-    ) -> dict[str, str]:
+    def _build_env(self, profile: SandboxProfile, sandbox_root: str) -> dict[str, str]:
         """Construye un environment limpio para el subprocess."""
         # Empezar con variables mínimas
         env: dict[str, str] = {
@@ -307,9 +298,7 @@ class SandboxExecutor:
             blocker_path.write_text(_NETWORK_BLOCKER_SCRIPT, encoding="utf-8")
             # sitecustomize.py se auto-ejecuta al iniciar Python
             sitecustomize = Path(sandbox_root) / "sitecustomize.py"
-            sitecustomize.write_text(
-                "import _eon_net_block\n", encoding="utf-8"
-            )
+            sitecustomize.write_text("import _eon_net_block\n", encoding="utf-8")
 
         # Filtrar env_vars_allowed
         if profile.env_vars_allowed:

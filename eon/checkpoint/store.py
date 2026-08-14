@@ -12,6 +12,7 @@ Tabla: checkpoints
   - hash TEXT
   - created_at TEXT
 """
+
 from __future__ import annotations
 
 import json
@@ -74,9 +75,7 @@ class SQLiteCheckpointStore:
         return checkpoint
 
     def get(self, checkpoint_id: str) -> Checkpoint | None:
-        row = self._engine.query_one(
-            "SELECT data FROM checkpoints WHERE id = ?", (checkpoint_id,)
-        )
+        row = self._engine.query_one("SELECT data FROM checkpoints WHERE id = ?", (checkpoint_id,))
         if row is None:
             return None
         return Checkpoint.from_dict(json.loads(row["data"]))
@@ -84,8 +83,7 @@ class SQLiteCheckpointStore:
     def latest_for_execution(self, execution_id: str) -> Checkpoint | None:
         """Devuelve el checkpoint más reciente para una ejecución."""
         row = self._engine.query_one(
-            "SELECT data FROM checkpoints WHERE execution_id = ? "
-            "ORDER BY event_seq DESC, created_at DESC LIMIT 1",
+            "SELECT data FROM checkpoints WHERE execution_id = ? ORDER BY event_seq DESC, created_at DESC LIMIT 1",
             (execution_id,),
         )
         if row is None:
@@ -115,17 +113,14 @@ class SQLiteCheckpointStore:
     def list_for_execution(self, execution_id: str) -> list[Checkpoint]:
         """Lista todos los checkpoints de una ejecución, ordenados por seq."""
         rows = self._engine.query_all(
-            "SELECT data FROM checkpoints WHERE execution_id = ? "
-            "ORDER BY event_seq ASC, created_at ASC",
+            "SELECT data FROM checkpoints WHERE execution_id = ? ORDER BY event_seq ASC, created_at ASC",
             (execution_id,),
         )
         return [Checkpoint.from_dict(json.loads(r["data"])) for r in rows]
 
     def list_all(self) -> list[Checkpoint]:
         """Lista todos los checkpoints."""
-        rows = self._engine.query_all(
-            "SELECT data FROM checkpoints ORDER BY created_at DESC"
-        )
+        rows = self._engine.query_all("SELECT data FROM checkpoints ORDER BY created_at DESC")
         return [Checkpoint.from_dict(json.loads(r["data"])) for r in rows]
 
     def verify_hash(self, checkpoint_id: str) -> bool:

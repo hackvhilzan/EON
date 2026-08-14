@@ -18,6 +18,7 @@ Semántica:
 - Multiple forks pueden correr en paralelo
 - comparar_forks() hace un diff read-only de estados finales
 """
+
 from __future__ import annotations
 
 from .manager import ForkManager

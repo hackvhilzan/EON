@@ -3,6 +3,7 @@ eon.tracing.store
 ==================
 Persistencia SQLite para spans de tracing.
 """
+
 from __future__ import annotations
 
 import json
@@ -89,7 +90,5 @@ class SQLiteTraceStore:
                 (execution_id,),
             )
         else:
-            rows = self._engine.query_all(
-                "SELECT COUNT(*) as cnt FROM trace_spans"
-            )
+            rows = self._engine.query_all("SELECT COUNT(*) as cnt FROM trace_spans")
         return rows[0]["cnt"] if rows else 0

@@ -9,6 +9,7 @@ Devuelve (cumple, confianza, justificacion).
 El provider LLM es inyectable/mockeable — nunca se hacen llamadas
 API reales en tests.
 """
+
 from __future__ import annotations
 
 import logging

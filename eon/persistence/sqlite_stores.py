@@ -6,6 +6,7 @@ Implementaciones SQLite de los 7 stores de dominio de EON.
 Cada store implementa la misma interfaz ABC que su contraparte InMemory,
 de forma que son intercambiables sin tocar el Manager correspondiente.
 """
+
 from __future__ import annotations
 
 import threading
@@ -14,6 +15,7 @@ from typing import Any
 from .sqlite_engine import SQLiteEngine
 
 # ─── ObjectiveStore ──────────────────────────────────────
+
 
 class SQLiteObjectiveStore:
     """SQLite backend para ObjectiveStore."""
@@ -31,6 +33,7 @@ class SQLiteObjectiveStore:
 
     def get(self, objective_id: str) -> Any:
         from ..objectives.models import Objective
+
         d = self._engine.get_entity("objectives", objective_id)
         return Objective.from_dict(d) if d else None
 
@@ -43,23 +46,28 @@ class SQLiteObjectiveStore:
 
     def list(self) -> list[Any]:
         from ..objectives.models import Objective
+
         return [Objective.from_dict(d) for d in self._engine.list_entities("objectives")]
 
     def children(self, objective_id: str) -> list[Any]:
         from ..objectives.models import Objective
+
         rows = self._engine.list_entities_by_col("objectives", "padre_id", objective_id)
         return [Objective.from_dict(d) for d in rows]
 
     def root_objectives(self) -> list[Any]:
         from ..objectives.models import Objective
+
         rows = self._engine.query_all(
             "SELECT data FROM objectives WHERE padre_id IS NULL OR padre_id = '' ORDER BY created_at"
         )
         import json
+
         return [Objective.from_dict(json.loads(r["data"])) for r in rows]
 
 
 # ─── PlannerStore ────────────────────────────────────────
+
 
 class SQLitePlannerStore:
     """SQLite backend para PlannerStore."""
@@ -78,6 +86,7 @@ class SQLitePlannerStore:
 
     def get(self, plan_id: str) -> Any:
         from ..planner.models import Plan
+
         d = self._engine.get_entity("plans", plan_id)
         return Plan.from_dict(d) if d else None
 
@@ -91,15 +100,18 @@ class SQLitePlannerStore:
 
     def list(self) -> list[Any]:
         from ..planner.models import Plan
+
         return [Plan.from_dict(d) for d in self._engine.list_entities("plans")]
 
     def by_objective(self, objective_id: str) -> list[Any]:
         from ..planner.models import Plan
+
         rows = self._engine.list_entities_by_col("plans", "objective_id", objective_id)
         return [Plan.from_dict(d) for d in rows]
 
     def active_for_objective(self, objective_id: str) -> Any:
         from ..planner.models import Plan, PlanState
+
         rows = self._engine.query_all(
             "SELECT data FROM plans WHERE objective_id = ? AND estado = ? ORDER BY version DESC LIMIT 1",
             (objective_id, PlanState.ACTIVO.value),
@@ -107,10 +119,12 @@ class SQLitePlannerStore:
         if not rows:
             return None
         import json
+
         return Plan.from_dict(json.loads(rows[0]["data"]))
 
 
 # ─── SchedulerStore ──────────────────────────────────────
+
 
 class SQLiteSchedulerStore:
     """SQLite backend para SchedulerStore."""
@@ -132,9 +146,11 @@ class SQLiteSchedulerStore:
 
     def obtener(self, plan_id: str) -> Any:
         from ..scheduler.models import SchedulerRun
+
         d = self._engine.get_entity_by_col("scheduler_runs", "plan_id", plan_id)
         if d is None:
             from ..scheduler.exceptions import SchedulerNotFoundError
+
             raise SchedulerNotFoundError(plan_id)
         return SchedulerRun.from_dict(d)
 
@@ -145,27 +161,27 @@ class SQLiteSchedulerStore:
 
     def listar(self) -> list[Any]:
         from ..scheduler.models import SchedulerRun
+
         rows = self._engine.query_all("SELECT data FROM scheduler_runs ORDER BY created_at")
         import json
+
         return [SchedulerRun.from_dict(json.loads(r["data"])) for r in rows]
 
     def plan_de_task(self, task_id: str) -> str:
-        row = self._engine.query_one(
-            "SELECT plan_id FROM scheduler_task_index WHERE task_id = ?", (task_id,)
-        )
+        row = self._engine.query_one("SELECT plan_id FROM scheduler_task_index WHERE task_id = ?", (task_id,))
         if row is None:
             from ..scheduler.exceptions import TaskNotFoundError
+
             raise TaskNotFoundError(task_id)
         return row["plan_id"]
 
     def plan_de_task_o_none(self, task_id: str) -> str | None:
-        row = self._engine.query_one(
-            "SELECT plan_id FROM scheduler_task_index WHERE task_id = ?", (task_id,)
-        )
+        row = self._engine.query_one("SELECT plan_id FROM scheduler_task_index WHERE task_id = ?", (task_id,))
         return row["plan_id"] if row else None
 
 
 # ─── WorkspaceStore ──────────────────────────────────────
+
 
 class SQLiteWorkspaceStore:
     """SQLite backend para WorkspaceStore."""
@@ -183,6 +199,7 @@ class SQLiteWorkspaceStore:
 
     def get(self, workspace_id: str) -> Any:
         from ..workspace.models import Workspace
+
         d = self._engine.get_entity("workspaces", workspace_id)
         return Workspace.from_dict(d) if d else None
 
@@ -197,14 +214,17 @@ class SQLiteWorkspaceStore:
         deleted = self._engine.delete_entity("workspaces", workspace_id)
         if not deleted:
             from ..workspace.exceptions import WorkspaceNotFoundError
+
             raise WorkspaceNotFoundError(workspace_id)
 
     def list(self) -> list[Any]:
         from ..workspace.models import Workspace
+
         return [Workspace.from_dict(d) for d in self._engine.list_entities("workspaces")]
 
 
 # ─── PackageStore ────────────────────────────────────────
+
 
 class SQLitePackageStore:
     """SQLite backend para PackageStore."""
@@ -221,6 +241,7 @@ class SQLitePackageStore:
 
     def get(self, package_id: str) -> Any:
         from ..package.models import Package
+
         d = self._engine.get_entity("packages", package_id)
         return Package.from_dict(d) if d else None
 
@@ -232,10 +253,12 @@ class SQLitePackageStore:
 
     def list(self) -> list[Any]:
         from ..package.models import Package
+
         return [Package.from_dict(d) for d in self._engine.list_entities("packages")]
 
 
 # ─── WorkerStore ─────────────────────────────────────────
+
 
 class SQLiteWorkerStore:
     """SQLite backend para WorkerStore."""
@@ -252,6 +275,7 @@ class SQLiteWorkerStore:
 
     def get(self, worker_id: str) -> Any:
         from ..workers.models import Worker
+
         d = self._engine.get_entity("workers", worker_id)
         return Worker.from_dict(d) if d else None
 
@@ -263,15 +287,18 @@ class SQLiteWorkerStore:
 
     def list(self) -> list[Any]:
         from ..workers.models import Worker
+
         return [Worker.from_dict(d) for d in self._engine.list_entities("workers")]
 
     def list_idle(self) -> list[Any]:
         from ..workers.models import Worker
+
         rows = self._engine.list_entities_by_col("workers", "estado", "idle")
         return [Worker.from_dict(d) for d in rows]
 
 
 # ─── CoordinatorStore ────────────────────────────────────
+
 
 class SQLiteCoordinatorStore:
     """SQLite backend para CoordinatorStore."""
@@ -287,6 +314,7 @@ class SQLiteCoordinatorStore:
 
     def get(self, execution_id: str) -> Any:
         from ..coordinator.models import CoordinatorExecution
+
         d = self._engine.get_entity("coordinator_executions", execution_id)
         return CoordinatorExecution.from_dict(d) if d else None
 
@@ -300,4 +328,5 @@ class SQLiteCoordinatorStore:
 
     def list(self) -> list[Any]:
         from ..coordinator.models import CoordinatorExecution
+
         return [CoordinatorExecution.from_dict(d) for d in self._engine.list_entities("coordinator_executions")]

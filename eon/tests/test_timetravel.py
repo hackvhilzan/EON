@@ -12,6 +12,7 @@ Criterios de aceptación:
 - KernelRuntime.inspeccionar_en() integra correctamente
 - Conservadores: reducers no mutan el checkpoint original
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -23,7 +24,6 @@ from eon.checkpoint.models import SemanticSnapshot
 from eon.persistence import SQLiteEngine
 from eon.persistence.event_store import EventStore
 from eon.timetravel import TimeMachine
-
 
 # ─── Fixtures ─────────────────────────────────────────────
 
@@ -197,9 +197,8 @@ class TestTimeMachine:
 
         # Tamper: alterar el checkpoint directamente en la DB
         import json
-        row = cp_store._engine.query_one(
-            "SELECT data FROM checkpoints WHERE id = ?", (cp.id,)
-        )
+
+        row = cp_store._engine.query_one("SELECT data FROM checkpoints WHERE id = ?", (cp.id,))
         data = json.loads(row["data"])
         data["stores_state"]["coordinator"]["estado"] = "TAMPERED"
         cp_store._engine.execute(
@@ -416,9 +415,7 @@ class TestKernelRuntimeTimeTravel:
             runtime._checkpoint_manager._store.save(cp)
 
             # Añadir evento
-            runtime._store_registry.event_store.append(
-                "exec-1", "task.completed", {"task_id": "t1"}
-            )
+            runtime._store_registry.event_store.append("exec-1", "task.completed", {"task_id": "t1"})
 
             result = runtime.inspeccionar_en("exec-1", 10)
             assert result is not None

@@ -56,7 +56,7 @@ import os
 import shutil
 from typing import Any
 
-from .semantic import HashingEmbedder, InMemoryVectorStore, VectorEntry
+from .semantic import InMemoryVectorStore, VectorEntry
 
 logger = logging.getLogger("eon.memory.chroma_backend")
 
@@ -139,8 +139,7 @@ class ChromaVectorStore(InMemoryVectorStore):
             )
 
         logger.debug(
-            "ChromaVectorStore inicializado: collection=%s, persist_path=%s, "
-            "embedding=%s, distance=%s, count=%d",
+            "ChromaVectorStore inicializado: collection=%s, persist_path=%s, embedding=%s, distance=%s, count=%d",
             collection_name,
             persist_path or "(ephemeral)",
             "custom" if embedding_provider else "native",

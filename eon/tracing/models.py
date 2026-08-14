@@ -3,6 +3,7 @@ eon.tracing.models
 ===================
 Modelos de tracing distribuido (OTel-shaped, ligero).
 """
+
 from __future__ import annotations
 
 import uuid
@@ -37,6 +38,7 @@ class Span:
     Un trace es una jerarquía de spans que representa el flujo
     de una ejecución a través de los componentes del kernel.
     """
+
     trace_id: str = field(default_factory=_gen_trace_id)
     span_id: str = field(default_factory=_gen_span_id)
     parent_span_id: str | None = None
@@ -113,6 +115,7 @@ class Span:
 @dataclass
 class Trace:
     """Colección de spans de una ejecución."""
+
     trace_id: str
     execution_id: str = ""
     spans: list[Span] = field(default_factory=list)

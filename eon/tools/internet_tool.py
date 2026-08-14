@@ -5,6 +5,7 @@ InternetTool — búsqueda web con httpx, resultados parseados.
 
 Dependencia opcional: httpx
 """
+
 from __future__ import annotations
 
 import logging
@@ -33,9 +34,7 @@ class InternetTool(Tool):
             try:
                 import httpx
             except ImportError as exc:
-                raise ImportError(
-                    "httpx no está instalado. Instala con: pip install httpx"
-                ) from exc
+                raise ImportError("httpx no está instalado. Instala con: pip install httpx") from exc
             self._client = httpx.Client(timeout=self._timeout)
         return self._client
 

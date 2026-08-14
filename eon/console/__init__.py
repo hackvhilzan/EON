@@ -37,7 +37,6 @@ Uso con auth + TLS::
 
 from __future__ import annotations
 
-import hashlib
 import hmac
 import json
 import os
@@ -85,10 +84,7 @@ class AuthProvider:
             return True
         if not bearer_token:
             return False
-        for valid_token in self._tokens:
-            if hmac.compare_digest(bearer_token, valid_token):
-                return True
-        return False
+        return any(hmac.compare_digest(bearer_token, valid_token) for valid_token in self._tokens)
 
     def generate_token(self) -> str:
         """Genera un token aleatorio seguro (32 bytes hex)."""
@@ -132,10 +128,13 @@ class _ConsoleHandler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def _send_unauthorized(self) -> None:
-        self._send_json(401, {
-            "error": "Unauthorized",
-            "detail": "Missing or invalid Bearer token. Use 'Authorization: Bearer <token>'.",
-        })
+        self._send_json(
+            401,
+            {
+                "error": "Unauthorized",
+                "detail": "Missing or invalid Bearer token. Use 'Authorization: Bearer <token>'.",
+            },
+        )
 
     def do_GET(self) -> None:
         parsed = urlparse(self.path)
@@ -155,34 +154,43 @@ class _ConsoleHandler(BaseHTTPRequestHandler):
                 store = self.runtime._coordinator_store
                 executions = []
                 for execution in store.list():
-                    executions.append({
-                        "id": execution.id,
-                        "estado": execution.estado.value if hasattr(execution.estado, "value") else str(execution.estado),
-                        "objective_id": getattr(execution, "objective_id", ""),
-                        "plan_id": getattr(execution, "plan_id", ""),
-                        "workspace_id": getattr(execution, "workspace_id", ""),
-                        "package_id": getattr(execution, "package_id", ""),
-                    })
+                    executions.append(
+                        {
+                            "id": execution.id,
+                            "estado": execution.estado.value
+                            if hasattr(execution.estado, "value")
+                            else str(execution.estado),
+                            "objective_id": getattr(execution, "objective_id", ""),
+                            "plan_id": getattr(execution, "plan_id", ""),
+                            "workspace_id": getattr(execution, "workspace_id", ""),
+                            "package_id": getattr(execution, "package_id", ""),
+                        }
+                    )
                 self._send_json(200, {"executions": executions})
             except Exception as exc:
                 self._send_json(500, {"error": str(exc)})
             return
 
         if path.startswith("/executions/"):
-            exec_id = path[len("/executions/"):]
+            exec_id = path[len("/executions/") :]
             try:
                 execution = self.runtime._coordinator_store.get(exec_id)
                 if execution is None:
                     self._send_json(404, {"error": f"Execution '{exec_id}' not found"})
                     return
-                self._send_json(200, {
-                    "id": execution.id,
-                    "estado": execution.estado.value if hasattr(execution.estado, "value") else str(execution.estado),
-                    "objective_id": getattr(execution, "objective_id", ""),
-                    "plan_id": getattr(execution, "plan_id", ""),
-                    "workspace_id": getattr(execution, "workspace_id", ""),
-                    "package_id": getattr(execution, "package_id", ""),
-                })
+                self._send_json(
+                    200,
+                    {
+                        "id": execution.id,
+                        "estado": execution.estado.value
+                        if hasattr(execution.estado, "value")
+                        else str(execution.estado),
+                        "objective_id": getattr(execution, "objective_id", ""),
+                        "plan_id": getattr(execution, "plan_id", ""),
+                        "workspace_id": getattr(execution, "workspace_id", ""),
+                        "package_id": getattr(execution, "package_id", ""),
+                    },
+                )
             except Exception as exc:
                 self._send_json(500, {"error": str(exc)})
             return
@@ -226,11 +234,14 @@ class _ConsoleHandler(BaseHTTPRequestHandler):
                     configuracion=data.get("configuracion"),
                     execution_id=data.get("execution_id"),
                 )
-                self._send_json(201, {
-                    "execution_id": result.execution_id,
-                    "package_id": result.package_id,
-                    "package_state": result.package_state,
-                })
+                self._send_json(
+                    201,
+                    {
+                        "execution_id": result.execution_id,
+                        "package_id": result.package_id,
+                        "package_state": result.package_state,
+                    },
+                )
             except Exception as exc:
                 self._send_json(500, {"error": str(exc)})
             return
@@ -262,15 +273,24 @@ class TLSCertGenerator:
         """
         # Intentar con openssl (común en Linux/macOS)
         import subprocess
+
         try:
             subprocess.run(
                 [
-                    "openssl", "req", "-x509", "-newkey", "rsa:2048",
-                    "-keyout", keyfile,
-                    "-out", certfile,
-                    "-days", str(days),
+                    "openssl",
+                    "req",
+                    "-x509",
+                    "-newkey",
+                    "rsa:2048",
+                    "-keyout",
+                    keyfile,
+                    "-out",
+                    certfile,
+                    "-days",
+                    str(days),
                     "-nodes",
-                    "-subj", f"/CN={common_name}",
+                    "-subj",
+                    f"/CN={common_name}",
                 ],
                 check=True,
                 capture_output=True,
@@ -282,16 +302,19 @@ class TLSCertGenerator:
 
         # Intentar con cryptography si está instalado
         try:
+            import datetime
+
             from cryptography import x509
             from cryptography.hazmat.primitives import hashes, serialization
             from cryptography.hazmat.primitives.asymmetric import rsa
             from cryptography.x509.oid import NameOID
-            import datetime
 
             key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
-            subject = issuer = x509.Name([
-                x509.NameAttribute(NameOID.COMMON_NAME, common_name),
-            ])
+            subject = issuer = x509.Name(
+                [
+                    x509.NameAttribute(NameOID.COMMON_NAME, common_name),
+                ]
+            )
             cert = (
                 x509.CertificateBuilder()
                 .subject_name(subject)
@@ -305,11 +328,13 @@ class TLSCertGenerator:
             with open(certfile, "wb") as f:
                 f.write(cert.public_bytes(serialization.Encoding.PEM))
             with open(keyfile, "wb") as f:
-                f.write(key.private_bytes(
-                    serialization.Encoding.PEM,
-                    serialization.PrivateFormat.TraditionalOpenSSL,
-                    serialization.NoEncryption(),
-                ))
+                f.write(
+                    key.private_bytes(
+                        serialization.Encoding.PEM,
+                        serialization.PrivateFormat.TraditionalOpenSSL,
+                        serialization.NoEncryption(),
+                    )
+                )
             return True
         except ImportError:
             return False
@@ -387,13 +412,12 @@ class ConsoleServer:
             return None
 
         # Auto-generate self-signed certs if requested and files don't exist
-        if self._tls_auto_generate:
-            if not (os.path.exists(self._tls_certfile) and os.path.exists(self._tls_keyfile)):
-                TLSCertGenerator.generate_self_signed(
-                    certfile=self._tls_certfile,
-                    keyfile=self._tls_keyfile,
-                    common_name=self._host,
-                )
+        if self._tls_auto_generate and not (os.path.exists(self._tls_certfile) and os.path.exists(self._tls_keyfile)):
+            TLSCertGenerator.generate_self_signed(
+                certfile=self._tls_certfile,
+                keyfile=self._tls_keyfile,
+                common_name=self._host,
+            )
 
         if not os.path.exists(self._tls_certfile) or not os.path.exists(self._tls_keyfile):
             return None  # Files don't exist, fall back to HTTP
@@ -410,20 +434,14 @@ class ConsoleServer:
         if self._server is not None:
             return  # already running
 
-        self._server = ThreadingHTTPServer(
-            (self._host, self._port), self._make_handler()
-        )
+        self._server = ThreadingHTTPServer((self._host, self._port), self._make_handler())
 
         # Wrap socket with TLS if configured
         tls_ctx = self._setup_tls()
         if tls_ctx is not None:
-            self._server.socket = tls_ctx.wrap_socket(
-                self._server.socket, server_side=True
-            )
+            self._server.socket = tls_ctx.wrap_socket(self._server.socket, server_side=True)
 
-        self._thread = threading.Thread(
-            target=self._server.serve_forever, daemon=True
-        )
+        self._thread = threading.Thread(target=self._server.serve_forever, daemon=True)
         self._thread.start()
 
     def stop(self) -> None:

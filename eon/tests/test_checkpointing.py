@@ -9,6 +9,7 @@ Criterios de aceptación:
 - KernelRuntime.crear_checkpoint() con SQLite
 - Auto-checkpoint solo cuando checkpointing_enabled=True
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -27,6 +28,7 @@ from eon.persistence import SQLiteEngine
 
 # ─── Fixtures ─────────────────────────────────────────────
 
+
 @pytest.fixture
 def engine(tmp_path: Path) -> SQLiteEngine:
     eng = SQLiteEngine(tmp_path / "test_cp.db")
@@ -41,6 +43,7 @@ def cp_store(engine: SQLiteEngine) -> SQLiteCheckpointStore:
 
 
 # ─── Checkpoint Model Tests ────────────────────────────────
+
 
 class TestCheckpointModel:
     def test_compute_hash_stable(self):
@@ -235,6 +238,7 @@ class TestCheckpointModel:
 
 # ─── SemanticSnapshot Tests ────────────────────────────────
 
+
 class TestSemanticSnapshot:
     def test_empty_builder(self):
         builder = SemanticSnapshotBuilder()
@@ -315,6 +319,7 @@ class TestSemanticSnapshot:
 
 # ─── SQLiteCheckpointStore Tests ───────────────────────────
 
+
 class TestSQLiteCheckpointStore:
     def test_save_and_get(self, cp_store):
         cp = Checkpoint(
@@ -391,6 +396,7 @@ class TestSQLiteCheckpointStore:
 
 # ─── CheckpointManager Tests ──────────────────────────────
 
+
 class TestCheckpointManager:
     def test_crear_checkpoint_with_no_stores(self, cp_store):
         """CheckpointManager funciona sin stores — snapshot vacío."""
@@ -437,6 +443,7 @@ class TestCheckpointManager:
 
 
 # ─── KernelRuntime Integration Tests ──────────────────────
+
 
 class TestKernelRuntimeCheckpoints:
     def test_checkpoint_with_sqlite(self, tmp_path: Path):

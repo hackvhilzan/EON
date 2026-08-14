@@ -96,10 +96,7 @@ class CompositeVerifierAdapter:
         self.last_confidence = result.confianza
 
         # Translate to VerifierPortResultado
-        if result.cumple and result.confianza >= umbral:
-            dictamen = "aprobado"
-        else:
-            dictamen = "rechazado"
+        dictamen = "aprobado" if result.cumple and result.confianza >= umbral else "rechazado"
 
         self.last_dictamen = dictamen
 
