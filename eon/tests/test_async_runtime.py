@@ -8,6 +8,7 @@ Criterios de aceptación del roadmap:
 - EventBus async: compatibilidad hacia atrás
 - TaskQueue: persistencia (create → close → reopen → verify)
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -23,6 +24,7 @@ from eon.workers.worker_pool import WorkerPool
 
 # ─── Fixtures ─────────────────────────────────────────────
 
+
 @pytest.fixture
 def engine(tmp_path: Path) -> SQLiteEngine:
     eng = SQLiteEngine(tmp_path / "test_async.db")
@@ -37,6 +39,7 @@ def task_queue(engine: SQLiteEngine) -> SQLiteTaskQueue:
 
 
 # ─── AsyncEventBus Tests ──────────────────────────────────
+
 
 class TestAsyncEventBus:
     @pytest.mark.asyncio
@@ -124,6 +127,7 @@ class TestAsyncEventBus:
 
 # ─── SyncEventBusAdapter Tests ────────────────────────────
 
+
 class TestSyncEventBusAdapter:
     def test_sync_emit(self):
         adapter = SyncEventBusAdapter()
@@ -142,6 +146,7 @@ class TestSyncEventBusAdapter:
 
 
 # ─── TaskQueue Tests ─────────────────────────────────────
+
 
 class TestSQLiteTaskQueue:
     def test_enqueue_and_get(self, task_queue):
@@ -237,6 +242,7 @@ class TestSQLiteTaskQueue:
 
 
 # ─── WorkerPool Tests ─────────────────────────────────────
+
 
 class TestWorkerPool:
     @pytest.mark.asyncio
@@ -392,9 +398,7 @@ class TestWorkerPool:
         events_received = []
         bus.subscribe("TASK_COMPLETADA", lambda **d: events_received.append(d))
 
-        task_queue.enqueue(
-            TaskEntry(task_id="t-evt", capability_id="work", timeout_seconds=5.0)
-        )
+        task_queue.enqueue(TaskEntry(task_id="t-evt", capability_id="work", timeout_seconds=5.0))
 
         pool = WorkerPool(
             queue=task_queue,

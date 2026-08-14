@@ -6,6 +6,7 @@ PythonTool — ejecución de código Python (bajo sandbox).
 ADVERTENCIA: Esta Tool es de ALTO RIESGO. Debe usarse solo bajo
 gobernanza del PolicyEngine y con SandboxProfile restrictivo.
 """
+
 from __future__ import annotations
 
 import json
@@ -57,8 +58,10 @@ class PythonTool(Tool):
 
         # Wrapper como string plano (no f-string) para evitar conflictos
         # con llaves de Python. Los valores se inyectan via json.loads.
-        # Usamos %r (repr) para generar string literals Python válidos.
-        wrapper = (
+        # Usamos %r (repr) para generar string literals Python válidos --
+        # .format() exigiría escapar cada '{' literal de los json.dumps
+        # de abajo, más frágil que el %-format aquí.
+        wrapper = (  # noqa: UP031
             "import sys, json\n"
             "_g = dict(json.loads(%r))\n"
             "_code = json.loads(%r)\n"

@@ -5,6 +5,7 @@ BrowserTool — navegación headless con Playwright.
 
 Dependencia opcional: playwright
 """
+
 from __future__ import annotations
 
 import logging
@@ -37,8 +38,7 @@ class BrowserTool(Tool):
                 from playwright.async_api import async_playwright
             except ImportError as exc:
                 raise ImportError(
-                    "playwright no está instalado. "
-                    "Instala con: pip install playwright && playwright install chromium"
+                    "playwright no está instalado. Instala con: pip install playwright && playwright install chromium"
                 ) from exc
 
             self._playwright = await async_playwright().start()

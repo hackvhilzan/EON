@@ -7,6 +7,7 @@ No usa OpenTelemetry SDK. Es OTel-shaped: trace_id, span_id,
 parent_span_id, attributes, events. El exportador OTel real se
 añade en Fase 12.
 """
+
 from __future__ import annotations
 
 import logging
@@ -67,6 +68,7 @@ class Tracer:
         if not span.trace_id:
             # Generar trace_id si es raíz
             from .models import _gen_trace_id
+
             span.trace_id = _gen_trace_id()
 
         if attributes:

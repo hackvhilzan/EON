@@ -8,6 +8,7 @@ restrictiva gana: DENY > REQUIRE_APPROVAL > WARN > ALLOW.
 
 Integración con AuditLog: cada decisión se registra para auditoría.
 """
+
 from __future__ import annotations
 
 import logging
@@ -77,9 +78,7 @@ class ToolGuardrailManager:
                 if _ACTION_PRIORITY[result.action] > _ACTION_PRIORITY[final_result.action]:
                     final_result = result
             except Exception:
-                logger.exception(
-                    "Error en guardrail %s.pre_execute", guardrail.name
-                )
+                logger.exception("Error en guardrail %s.pre_execute", guardrail.name)
 
         # Aplicar redacción final
         if redacted_params != ctx.params:
@@ -105,9 +104,7 @@ class ToolGuardrailManager:
                 if _ACTION_PRIORITY[gr_result.action] > _ACTION_PRIORITY[final_result.action]:
                     final_result = gr_result
             except Exception:
-                logger.exception(
-                    "Error en guardrail %s.post_execute", guardrail.name
-                )
+                logger.exception("Error en guardrail %s.post_execute", guardrail.name)
 
         return final_result
 

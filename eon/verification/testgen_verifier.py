@@ -6,6 +6,7 @@ Layer 4: TestBasedVerifier.
 Genera tests automáticos para el resultado y los ejecuta.
 Si los tests pasan → cumple.
 """
+
 from __future__ import annotations
 
 import logging
@@ -127,7 +128,9 @@ class TestBasedVerifier:
         import subprocess
         import sys
 
-        wrapper = (
+        # %r (no f-string/.format) para no tener que escapar los '{' de los
+        # json.dumps de abajo.
+        wrapper = (  # noqa: UP031
             "import sys, json\n"
             "_artifact = %r\n"
             "try:\n"

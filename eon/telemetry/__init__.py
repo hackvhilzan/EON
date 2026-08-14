@@ -34,6 +34,7 @@ from typing import Any
 @dataclass
 class HistogramData:
     """Histogram bucket data for a single metric."""
+
     count: int = 0
     sum: float = 0.0
     min: float = float("inf")
@@ -141,10 +142,7 @@ class MetricsRecorder:
                 "uptime_seconds": round(uptime, 2),
                 "counters": dict(self._counters),
                 "gauges": dict(self._gauges),
-                "histograms": {
-                    name: hist.to_dict()
-                    for name, hist in self._histograms.items()
-                },
+                "histograms": {name: hist.to_dict() for name, hist in self._histograms.items()},
             }
 
     def reset(self) -> None:

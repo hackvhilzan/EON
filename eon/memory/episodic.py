@@ -7,6 +7,7 @@ Cada episodio captura: objetivo, plan, resultado, duración, coste,
 tasks fallidas y replanificaciones. Permite buscar episodios similares
 por similitud de descripción.
 """
+
 from __future__ import annotations
 
 import json
@@ -113,6 +114,7 @@ class EpisodicMemoryStore:
     def save(self, episode: Episode) -> Episode:
         if not episode.id:
             import uuid
+
             episode.id = str(uuid.uuid4())
 
         self._conn.execute(
@@ -147,15 +149,11 @@ class EpisodicMemoryStore:
         return episode
 
     def get(self, episode_id: str) -> Episode | None:
-        row = self._conn.execute(
-            "SELECT * FROM episodes WHERE id = ?", (episode_id,)
-        ).fetchone()
+        row = self._conn.execute("SELECT * FROM episodes WHERE id = ?", (episode_id,)).fetchone()
         return self._row_to_episode(row) if row else None
 
     def list_all(self, limit: int = 100) -> list[Episode]:
-        rows = self._conn.execute(
-            "SELECT * FROM episodes ORDER BY created_at DESC LIMIT ?", (limit,)
-        ).fetchall()
+        rows = self._conn.execute("SELECT * FROM episodes ORDER BY created_at DESC LIMIT ?", (limit,)).fetchall()
         return [self._row_to_episode(r) for r in rows]
 
     def list_by_execution(self, execution_id: str) -> list[Episode]:
@@ -205,21 +203,23 @@ class EpisodicMemoryStore:
 
     @staticmethod
     def _row_to_episode(row: sqlite3.Row) -> Episode:
-        return Episode.from_dict({
-            "id": row["id"],
-            "execution_id": row["execution_id"],
-            "objective_description": row["objective_description"],
-            "success_criteria": row["success_criteria"],
-            "plan_summary": row["plan_summary"],
-            "result_cumple": bool(row["result_cumple"]),
-            "result_confidence": row["result_confidence"],
-            "duration_seconds": row["duration_seconds"],
-            "cost_usd": row["cost_usd"],
-            "failed_tasks": json.loads(row["failed_tasks"] or "[]"),
-            "replans": row["replans"],
-            "tasks_total": row["tasks_total"],
-            "tasks_completed": row["tasks_completed"],
-            "tasks_failed": row["tasks_failed"],
-            "created_at": row["created_at"],
-            "metadata": json.loads(row["metadata"] or "{}"),
-        })
+        return Episode.from_dict(
+            {
+                "id": row["id"],
+                "execution_id": row["execution_id"],
+                "objective_description": row["objective_description"],
+                "success_criteria": row["success_criteria"],
+                "plan_summary": row["plan_summary"],
+                "result_cumple": bool(row["result_cumple"]),
+                "result_confidence": row["result_confidence"],
+                "duration_seconds": row["duration_seconds"],
+                "cost_usd": row["cost_usd"],
+                "failed_tasks": json.loads(row["failed_tasks"] or "[]"),
+                "replans": row["replans"],
+                "tasks_total": row["tasks_total"],
+                "tasks_completed": row["tasks_completed"],
+                "tasks_failed": row["tasks_failed"],
+                "created_at": row["created_at"],
+                "metadata": json.loads(row["metadata"] or "{}"),
+            }
+        )

@@ -16,6 +16,7 @@ Pesos por defecto:
 
 Los pesos se pueden ajustar con aprendizaje online (Fase 9).
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -66,17 +67,15 @@ class ConfidenceCalibrator:
         - Si una layer aplicable falló, la confianza baja.
         - Los pesos se renormalizan sobre las layers aplicables.
         """
-        applicable = [l for l in layers if l.applicable]
+        applicable = [layer for layer in layers if layer.applicable]
         if not applicable:
             return 0.0
 
         # Renormalizar pesos sobre layers aplicables
-        active_weight = sum(
-            self._weights.get(l.layer_name, 0.0) for l in applicable
-        )
+        active_weight = sum(self._weights.get(layer.layer_name, 0.0) for layer in applicable)
         if active_weight == 0:
             # Sin pesos definidos: promedio simple
-            return sum(l.confidence for l in applicable) / len(applicable)
+            return sum(layer.confidence for layer in applicable) / len(applicable)
 
         score = 0.0
         for layer in applicable:

@@ -11,6 +11,7 @@ Reglas:
 - Una capa FAILED crítica puede fallar toda la verificación.
 - La confianza final es un score calibrable, no una probabilidad real.
 """
+
 from __future__ import annotations
 
 import logging
@@ -116,12 +117,9 @@ class CompositeVerifier:
         # Determinar si cumple:
         # - No puede haber ninguna capa FAILED crítica
         # - Al menos una capa debe haber PASSED
-        any_passed = any(l.status == VerificationStatus.PASSED for l in layer_results)
-        any_failed = any(
-            l.status == VerificationStatus.FAILED and l.applicable
-            for l in layer_results
-        )
-        any_error = any(l.status == VerificationStatus.ERROR for l in layer_results)
+        any_passed = any(layer.status == VerificationStatus.PASSED for layer in layer_results)
+        any_failed = any(layer.status == VerificationStatus.FAILED and layer.applicable for layer in layer_results)
+        any_error = any(layer.status == VerificationStatus.ERROR for layer in layer_results)
 
         cumple = any_passed and not any_failed
 
@@ -130,11 +128,7 @@ class CompositeVerifier:
             confianza *= 0.5
 
         # Motivo agregado
-        motivos = [
-            f"{l.layer_name}: {l.motivo}"
-            for l in layer_results
-            if l.applicable
-        ]
+        motivos = [f"{layer.layer_name}: {layer.motivo}" for layer in layer_results if layer.applicable]
         motivo = "; ".join(motivos) if motivos else "Sin capas aplicables"
 
         # Construir EvidenceGraph
@@ -168,25 +162,29 @@ class CompositeVerifier:
         # Nodos de artefactos
         for name, value in artifacts.items():
             node_id = f"artifact:{name}"
-            graph.add_node(EvidenceNode(
-                node_id=node_id,
-                node_type="artifact",
-                value=value,
-            ))
+            graph.add_node(
+                EvidenceNode(
+                    node_id=node_id,
+                    node_type="artifact",
+                    value=value,
+                )
+            )
             graph.add_edge("evidence", node_id)
 
         # Nodos de layers de verificación
         for layer in layer_results:
             node_id = f"layer:{layer.layer_name}"
-            graph.add_node(EvidenceNode(
-                node_id=node_id,
-                node_type="verification_layer",
-                value={
-                    "status": layer.status.value,
-                    "confidence": layer.confidence,
-                    "motivo": layer.motivo,
-                },
-            ))
+            graph.add_node(
+                EvidenceNode(
+                    node_id=node_id,
+                    node_type="verification_layer",
+                    value={
+                        "status": layer.status.value,
+                        "confidence": layer.confidence,
+                        "motivo": layer.motivo,
+                    },
+                )
+            )
             graph.add_edge("evidence", node_id)
 
         return graph

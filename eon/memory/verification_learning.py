@@ -9,9 +9,9 @@ el 70%, el peso del LLMJudge sube.
 
 Aprendizaje online con decay: los datos viejos pesan menos.
 """
+
 from __future__ import annotations
 
-import json
 import sqlite3
 import uuid
 from dataclasses import asdict, dataclass, field
@@ -31,7 +31,7 @@ class VerificationOutcome:
     execution_id: str = ""
     layer_name: str = ""
     predicted_confidence: float = 0.0
-    actual_correct: bool = False    # ¿La verificación de esta layer fue correcta?
+    actual_correct: bool = False  # ¿La verificación de esta layer fue correcta?
     created_at: str = field(default_factory=_ahora)
 
     def to_dict(self) -> dict[str, Any]:
@@ -113,8 +113,11 @@ class VerificationWeightLearner:
             VALUES (?, ?, ?, ?, ?, ?)
             """,
             (
-                outcome.id, outcome.execution_id, outcome.layer_name,
-                outcome.predicted_confidence, int(outcome.actual_correct),
+                outcome.id,
+                outcome.execution_id,
+                outcome.layer_name,
+                outcome.predicted_confidence,
+                int(outcome.actual_correct),
                 outcome.created_at,
             ),
         )

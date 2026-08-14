@@ -22,6 +22,7 @@ Uso:
     # ... las tasks se procesan concurrentemente
     await pool.stop()
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -120,9 +121,7 @@ class WorkerPool:
                 entry = self._queue.lease(worker_id=worker_id)
                 if entry is None:
                     with contextlib.suppress(TimeoutError):
-                        await asyncio.wait_for(
-                            self._stop_event.wait(), timeout=self._poll_interval
-                        )
+                        await asyncio.wait_for(self._stop_event.wait(), timeout=self._poll_interval)
                     continue
 
                 # Ejecutar con concurrency limit

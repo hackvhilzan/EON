@@ -3,6 +3,7 @@ Reglas de guardrail incluidas en EON.
 
 Cada regla implementa la interfaz ToolGuardrail con pre_execute y post_execute.
 """
+
 from __future__ import annotations
 
 import re

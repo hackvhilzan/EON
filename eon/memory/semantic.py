@@ -9,6 +9,7 @@ Backend opcional: ChromaDB (si está instalado).
 EmbeddingProvider: interfaz para generar embeddings.
 HashingEmbedder: implementación determinista sin dependencias externas.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -75,12 +76,14 @@ class InMemoryVectorStore:
 
     def add(self, entry_id: str, text: str, metadata: dict[str, Any] | None = None) -> None:
         embedding = self._embedder.embed(text)
-        self._entries.append(VectorEntry(
-            id=entry_id,
-            text=text,
-            embedding=embedding,
-            metadata=metadata or {},
-        ))
+        self._entries.append(
+            VectorEntry(
+                id=entry_id,
+                text=text,
+                embedding=embedding,
+                metadata=metadata or {},
+            )
+        )
 
     def search(
         self,
@@ -162,6 +165,7 @@ class SemanticMemory:
         if backend == "chroma":
             try:
                 from .chroma_backend import ChromaVectorStore
+
                 return ChromaVectorStore(
                     collection_name=collection_name,
                     persist_path=persist_path,

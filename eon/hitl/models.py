@@ -3,6 +3,7 @@ eon.hitl.models
 ================
 Modelos de Human-in-the-Loop (HITL) para interrupciones persistentes.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -13,6 +14,7 @@ from enum import Enum
 
 class HITLStatus(str, Enum):
     """Estados válidos de una interrupción HITL."""
+
     PENDING = "pending"
     APPROVED = "approved"
     DENIED = "denied"
@@ -43,6 +45,7 @@ class HITLInterrupt:
         PENDING → DENIED               (denegado, task falla)
         PENDING → EXPIRED              (timeout automático)
     """
+
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
     execution_id: str = ""
     task_id: str = ""
@@ -66,9 +69,7 @@ class HITLInterrupt:
         decision_reason: str | None = None,
     ) -> None:
         if not self.can_transition_to(new_status):
-            raise ValueError(
-                f"Transición inválida: {self.status.value} → {new_status.value}"
-            )
+            raise ValueError(f"Transición inválida: {self.status.value} → {new_status.value}")
         self.status = new_status
         self.resolved_at = _utcnow_iso()
         if decided_by:
@@ -113,6 +114,7 @@ class HITLInterrupt:
 @dataclass
 class HITLDecision:
     """Record de la decisión humana sobre una interrupción."""
+
     interrupt_id: str
     decision: HITLStatus
     decided_by: str

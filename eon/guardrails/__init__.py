@@ -16,6 +16,7 @@ Reglas incluidas:
 - NetworkGuardrail: bloquea red si el sandbox profile no la permite
 - PIIGuardrail: detecta datos personales (email, DNI, tarjeta de crédito)
 """
+
 from __future__ import annotations
 
 from .manager import ToolGuardrailManager

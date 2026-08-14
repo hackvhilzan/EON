@@ -10,6 +10,7 @@ Niveles de aislamiento:
 - Env: variables limpias, secrets del host no heredados
 - Network: degradable — socket blocking para Python, best-effort para otros
 """
+
 from __future__ import annotations
 
 from .exceptions import (

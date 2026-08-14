@@ -9,6 +9,7 @@ Criterios de aceptación:
 - TaskExecutor con guardrail DENY emite TASK_FALLIDA y devuelve False
 - TaskExecutor sin guardrails conserva comportamiento original
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -30,9 +31,11 @@ from eon.workers.executor import TaskExecutor
 
 # ─── Helpers ─────────────────────────────────────────────
 
+
 @dataclass
 class FakeTask:
     """Task mínima para tests."""
+
     capability_id: str = "test.capability"
     id: str = "task-001"
     parametros: dict[str, Any] = field(default_factory=dict)
@@ -40,6 +43,7 @@ class FakeTask:
 
 class FakeAuditLog:
     """AuditLog fake para tests."""
+
     def __init__(self) -> None:
         self.records: list[dict] = []
 
@@ -48,6 +52,7 @@ class FakeAuditLog:
 
 
 # ─── SecretPatternGuardrail Tests ─────────────────────────
+
 
 class TestSecretPatternGuardrail:
     def test_detects_openai_key(self):
@@ -127,6 +132,7 @@ class TestSecretPatternGuardrail:
 
 # ─── FilesystemGuardrail Tests ───────────────────────────
 
+
 class TestFilesystemGuardrail:
     def test_blocks_path_traversal(self, tmp_path):
         g = FilesystemGuardrail(allowed_root=tmp_path)
@@ -159,6 +165,7 @@ class TestFilesystemGuardrail:
 
 
 # ─── NetworkGuardrail Tests ──────────────────────────────
+
 
 class TestNetworkGuardrail:
     def test_blocks_network_capability(self):
@@ -200,6 +207,7 @@ class TestNetworkGuardrail:
 
 # ─── PIIGuardrail Tests ──────────────────────────────────
 
+
 class TestPIIGuardrail:
     def test_detects_email(self):
         g = PIIGuardrail(block_pii=True)
@@ -240,6 +248,7 @@ class TestPIIGuardrail:
 
 
 # ─── ToolGuardrailManager Tests ──────────────────────────
+
 
 class TestToolGuardrailManager:
     def test_chain_multiple_guardrails(self):
@@ -302,6 +311,7 @@ class TestToolGuardrailManager:
 
 
 # ─── TaskExecutor Integration Tests ──────────────────────
+
 
 class TestTaskExecutorGuardrails:
     def test_guardrail_deny_blocks_execution(self):

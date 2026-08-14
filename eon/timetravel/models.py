@@ -7,6 +7,7 @@ ReconstructedState es el resultado de TimeMachine.reconstruct_state().
 Es read-only: representa una "fotografía" del kernel en un instante,
 no un estado mutable sobre el que se pueda operar.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -17,10 +18,10 @@ from typing import Any
 class ReconstructionMode(str, Enum):
     """Modo de reconstrucción del estado."""
 
-    EXACT = "exact"              # checkpoint base == target_seq, sin eventos posteriores
+    EXACT = "exact"  # checkpoint base == target_seq, sin eventos posteriores
     CHECKPOINT_PLUS = "checkpoint_plus"  # checkpoint + eventos aplicados (todos conocidos)
-    PARTIAL = "partial"          # checkpoint + eventos no aplicados (estado puede diferir)
-    EVENTS_ONLY = "events_only"   # sin checkpoint base, solo timeline
+    PARTIAL = "partial"  # checkpoint + eventos no aplicados (estado puede diferir)
+    EVENTS_ONLY = "events_only"  # sin checkpoint base, solo timeline
 
 
 @dataclass(frozen=True)

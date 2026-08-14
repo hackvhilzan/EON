@@ -1,4 +1,5 @@
 """Excepciones del sandbox de EON."""
+
 from __future__ import annotations
 
 

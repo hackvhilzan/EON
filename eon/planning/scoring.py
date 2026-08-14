@@ -11,6 +11,7 @@ Métricas:
 
 El score total es un promedio ponderado.
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -64,8 +65,7 @@ class PlanScorer:
         # ─── Robustness ───
         # Tasks con fallback/capacidad alternativa = más robusto
         tasks_with_fallback = sum(
-            1 for t in tasks
-            if isinstance(t, dict) and (t.get("fallback") or t.get("alternatives"))
+            1 for t in tasks if isinstance(t, dict) and (t.get("fallback") or t.get("alternatives"))
         )
         robustness = tasks_with_fallback / num_tasks if num_tasks > 0 else 0.0
         # Si no hay fallbacks pero hay pocas tasks, robust base de 0.3
@@ -74,24 +74,20 @@ class PlanScorer:
 
         # ─── Coverage ───
         # Keywords del criterio cubiertas por descriptions de tasks
-        criteria_words = set(
-            w.lower() for w in success_criteria.split()
+        criteria_words = {
+            w.lower()
+            for w in success_criteria.split()
             if len(w) > 3  # ignorar stopwords simples
-        )
+        }
         covered = 0
         if criteria_words and tasks:
             task_texts = []
             for t in tasks:
                 if isinstance(t, dict):
-                    task_texts.append(
-                        (t.get("description", "") + " " + t.get("capability_id", "")).lower()
-                    )
+                    task_texts.append((t.get("description", "") + " " + t.get("capability_id", "")).lower())
                 elif isinstance(t, str):
                     task_texts.append(t.lower())
-            covered = sum(
-                1 for word in criteria_words
-                if any(word in tt for tt in task_texts)
-            )
+            covered = sum(1 for word in criteria_words if any(word in tt for tt in task_texts))
             coverage = covered / len(criteria_words) if criteria_words else 0.5
         else:
             coverage = 0.5

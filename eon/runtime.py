@@ -935,9 +935,7 @@ class KernelRuntime:
         """
         if self._fork_manager is None:
             return None
-        return self._fork_manager.fork_from_checkpoint(
-            checkpoint_id, new_objective, metadata
-        )
+        return self._fork_manager.fork_from_checkpoint(checkpoint_id, new_objective, metadata)
 
     def obtener_fork(self, fork_id: str) -> Any | None:
         """Obtiene un fork por ID."""
@@ -1017,9 +1015,7 @@ class KernelRuntime:
         """
         if self._store_registry is None or self._store_registry.event_store is None:
             return 0
-        events = self._store_registry.event_store.get_events(
-            execution_id=execution_id
-        )
+        events = self._store_registry.event_store.get_events(execution_id=execution_id)
         for event in events:
             # Re-emitir al EventBus sin re-persistir (evitar loop).
             EventBus.emit(self._event_bus, event.event_type, **event.payload)

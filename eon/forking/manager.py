@@ -13,6 +13,7 @@ Estrategia: deep-copy del estado del checkpoint en nuevos IDs.
 
 comparar_forks() hace un diff read-only de estados finales de dos forks.
 """
+
 from __future__ import annotations
 
 import copy

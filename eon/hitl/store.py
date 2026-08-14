@@ -3,6 +3,7 @@ eon.hitl.store
 ===============
 Persistencia SQLite para interrupciones HITL.
 """
+
 from __future__ import annotations
 
 import json
@@ -66,9 +67,7 @@ class SQLiteHITLStore:
         )
 
     def get(self, interrupt_id: str) -> HITLInterrupt | None:
-        rows = self._engine.query_all(
-            "SELECT * FROM hitl_interrupts WHERE id = ?", (interrupt_id,)
-        )
+        rows = self._engine.query_all("SELECT * FROM hitl_interrupts WHERE id = ?", (interrupt_id,))
         if not rows:
             return None
         row = rows[0]
@@ -76,9 +75,7 @@ class SQLiteHITLStore:
         return HITLInterrupt.from_dict(data)
 
     def list_pending(self) -> list[HITLInterrupt]:
-        rows = self._engine.query_all(
-            "SELECT * FROM hitl_interrupts WHERE status = 'pending' ORDER BY created_at"
-        )
+        rows = self._engine.query_all("SELECT * FROM hitl_interrupts WHERE status = 'pending' ORDER BY created_at")
         return [HITLInterrupt.from_dict(json.loads(r["data"])) for r in rows]
 
     def list_for_execution(self, execution_id: str) -> list[HITLInterrupt]:
@@ -89,9 +86,7 @@ class SQLiteHITLStore:
         return [HITLInterrupt.from_dict(json.loads(r["data"])) for r in rows]
 
     def list_all(self) -> list[HITLInterrupt]:
-        rows = self._engine.query_all(
-            "SELECT * FROM hitl_interrupts ORDER BY created_at DESC"
-        )
+        rows = self._engine.query_all("SELECT * FROM hitl_interrupts ORDER BY created_at DESC")
         return [HITLInterrupt.from_dict(json.loads(r["data"])) for r in rows]
 
     def count(self, status: str | None = None) -> int:
@@ -101,9 +96,7 @@ class SQLiteHITLStore:
                 (status,),
             )
         else:
-            rows = self._engine.query_all(
-                "SELECT COUNT(*) as cnt FROM hitl_interrupts"
-            )
+            rows = self._engine.query_all("SELECT COUNT(*) as cnt FROM hitl_interrupts")
         return rows[0]["cnt"] if rows else 0
 
     def update(self, interrupt: HITLInterrupt) -> None:

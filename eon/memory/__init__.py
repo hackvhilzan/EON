@@ -12,21 +12,24 @@ El kernel aprende de cada ejecución:
 - Replay: reproduce ejecuciones paso a paso desde EventStore
 - VerificationLearning: ajuste online de pesos de verificación
 """
+
 from __future__ import annotations
 
 from .episodic import Episode, EpisodicMemoryStore
-from .semantic import EmbeddingProvider, InMemoryVectorStore, SemanticMemory, HashingEmbedder
+from .failure_patterns import FailureCategory, FailurePatterns, FailureRecord
+from .replay import ExecutionReplayer, ReplayResult, ReplayStep
+from .semantic import EmbeddingProvider, HashingEmbedder, InMemoryVectorStore, SemanticMemory
 from .skills import Skill, SkillLibrary
-from .failure_patterns import FailurePatterns, FailureCategory, FailureRecord
-from .replay import ExecutionReplayer, ReplayStep, ReplayResult
-from .verification_learning import VerificationWeightLearner, VerificationOutcome
+from .verification_learning import VerificationOutcome, VerificationWeightLearner
 
 
 def get_chroma_backend():
     """Devuelve ChromaVectorStore si chromadb está instalado, None si no."""
     try:
-        from .chroma_backend import ChromaVectorStore
         import chromadb  # noqa: F401
+
+        from .chroma_backend import ChromaVectorStore
+
         return ChromaVectorStore
     except ImportError:
         return None

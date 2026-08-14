@@ -11,27 +11,24 @@ Criterios de aceptación:
 - SDK: Tool, ToolResult, SandboxProfile re-exportados
 - Hot-reload: reload_directory recarga plugins
 """
+
 from __future__ import annotations
 
 import asyncio
-import os
 from pathlib import Path
 
 import pytest
 
 from eon.capabilities.capability_map import (
     CAPABILITY_MAP,
-    CapabilityNotMappedError,
     register_capability,
     register_plugin,
     resolver,
 )
-from eon.governance.models import PolicyDecision, SandboxProfile
 from eon.plugins import PluginLoader
 from eon.plugins.base import ToolPlugin
 from eon.tools.base_tool import Tool, ToolResult
 from eon.tools.registry import ToolRegistry
-
 
 # ─── Plugin Loader Tests ──────────────────────────────────
 
@@ -156,7 +153,6 @@ class TestPluginLoader:
 
     def test_load_directory_registers_capability_in_map(self, tmp_path):
         """Al cargar un plugin, su capability_id se registra en CapabilityMap."""
-        import copy
 
         from eon.capabilities.capability_map import CAPABILITY_MAP
 
@@ -242,9 +238,7 @@ class TestCapabilityMapRegister:
         import copy
 
         test_map = copy.deepcopy(CAPABILITY_MAP)
-        test_map["tool.test"] = type(next(iter(CAPABILITY_MAP.values())))(
-            tool_name="old_tool"
-        )
+        test_map["tool.test"] = type(next(iter(CAPABILITY_MAP.values())))(tool_name="old_tool")
 
         register_capability("tool.test", "new_tool", capability_map=test_map)
         spec = resolver("tool.test", capability_map=test_map)
@@ -256,6 +250,7 @@ class TestCapabilityMapRegister:
 
         class DummyTool(Tool):
             name = "dummy"
+
             async def execute(self, **kwargs):
                 return ToolResult(ok=True)
 
@@ -273,7 +268,7 @@ class TestCapabilityMapRegister:
 class TestSDK:
     def test_imports(self):
         """SDK re-exporta las interfaces necesarias."""
-        from eon.sdk import Tool, ToolResult, SandboxProfile, PolicyDecision, ToolPlugin
+        from eon.sdk import PolicyDecision, SandboxProfile, Tool, ToolPlugin, ToolResult
 
         assert Tool is not None
         assert ToolResult is not None
@@ -287,6 +282,7 @@ class TestSDK:
 
         class MyCustomTool(Tool):
             name = "custom_sdk_tool"
+
             async def execute(self, **kwargs):
                 return ToolResult(ok=True, data={"custom": True})
 
@@ -307,10 +303,11 @@ class TestDatabaseTool:
 
     def test_select_query(self, tmp_path):
         """Camino feliz: SELECT read-only."""
-        from eon.tools.database_tool import DatabaseTool
-
         # Crear BD de prueba
         import sqlite3
+
+        from eon.tools.database_tool import DatabaseTool
+
         db_path = str(tmp_path / "test.db")
         conn = sqlite3.connect(db_path)
         conn.execute("CREATE TABLE users (id INTEGER, name TEXT)")
@@ -320,9 +317,7 @@ class TestDatabaseTool:
         conn.close()
 
         tool = DatabaseTool(db_path=db_path)
-        result = asyncio.run(
-            tool.execute(query="SELECT * FROM users")
-        )
+        result = asyncio.run(tool.execute(query="SELECT * FROM users"))
 
         assert result.ok is True
         assert result.data["row_count"] == 2
@@ -333,9 +328,7 @@ class TestDatabaseTool:
         from eon.tools.database_tool import DatabaseTool
 
         tool = DatabaseTool(db_path=str(tmp_path / "test.db"))
-        result = asyncio.run(
-            tool.execute(query="INSERT INTO users VALUES (1, 'test')")
-        )
+        result = asyncio.run(tool.execute(query="INSERT INTO users VALUES (1, 'test')"))
 
         assert result.ok is False
         assert "read-only" in result.error.lower()
@@ -345,9 +338,7 @@ class TestDatabaseTool:
         from eon.tools.database_tool import DatabaseTool
 
         tool = DatabaseTool()
-        result = asyncio.run(
-            tool.execute(query="DROP TABLE users")
-        )
+        result = asyncio.run(tool.execute(query="DROP TABLE users"))
 
         assert result.ok is False
         assert "read-only" in result.error.lower()
@@ -357,9 +348,7 @@ class TestDatabaseTool:
         from eon.tools.database_tool import DatabaseTool
 
         tool = DatabaseTool()
-        result = asyncio.run(
-            tool.execute(query="SELECT * FROM nonexistent_table")
-        )
+        result = asyncio.run(tool.execute(query="SELECT * FROM nonexistent_table"))
 
         assert result.ok is False
 
@@ -372,9 +361,7 @@ class TestTerminalTool:
         from eon.tools.terminal_tool import TerminalTool
 
         tool = TerminalTool()
-        result = asyncio.run(
-            tool.execute(command="echo 'hello world'")
-        )
+        result = asyncio.run(tool.execute(command="echo 'hello world'"))
 
         assert result.ok is True
         assert "hello world" in result.data["stdout"]
@@ -384,9 +371,7 @@ class TestTerminalTool:
         from eon.tools.terminal_tool import TerminalTool
 
         tool = TerminalTool()
-        result = asyncio.run(
-            tool.execute(command="exit 1")
-        )
+        result = asyncio.run(tool.execute(command="exit 1"))
 
         assert result.ok is False
         assert result.data["returncode"] == 1
@@ -396,9 +381,7 @@ class TestTerminalTool:
         from eon.tools.terminal_tool import TerminalTool
 
         tool = TerminalTool(default_timeout=1.0)
-        result = asyncio.run(
-            tool.execute(command="sleep 10", timeout=1.0)
-        )
+        result = asyncio.run(tool.execute(command="sleep 10", timeout=1.0))
 
         assert result.ok is False
         assert "Timeout" in result.error
@@ -412,9 +395,7 @@ class TestPythonTool:
         from eon.tools.python_tool import PythonTool
 
         tool = PythonTool()
-        result = asyncio.run(
-            tool.execute(code="print('hello from python')")
-        )
+        result = asyncio.run(tool.execute(code="print('hello from python')"))
 
         assert result.ok is True
         assert "hello from python" in result.data["stdout"]
@@ -424,9 +405,7 @@ class TestPythonTool:
         from eon.tools.python_tool import PythonTool
 
         tool = PythonTool()
-        result = asyncio.run(
-            tool.execute(code="raise ValueError('test error')")
-        )
+        result = asyncio.run(tool.execute(code="raise ValueError('test error')"))
 
         assert result.ok is False
 
@@ -435,9 +414,7 @@ class TestPythonTool:
         from eon.tools.python_tool import PythonTool
 
         tool = PythonTool(default_timeout=1.0)
-        result = asyncio.run(
-            tool.execute(code="import time; time.sleep(10)", timeout=1.0)
-        )
+        result = asyncio.run(tool.execute(code="import time; time.sleep(10)", timeout=1.0))
 
         assert result.ok is False
         assert "Timeout" in result.error
@@ -451,9 +428,7 @@ class TestPDFTool:
         from eon.tools.pdf_tool import PDFTool
 
         tool = PDFTool()
-        result = asyncio.run(
-            tool.execute(action="read", path=str(tmp_path / "nonexistent.pdf"))
-        )
+        result = asyncio.run(tool.execute(action="read", path=str(tmp_path / "nonexistent.pdf")))
 
         # Si pypdf no está instalado → error claro
         # Si está instalado → error de archivo no encontrado
@@ -464,9 +439,7 @@ class TestPDFTool:
         from eon.tools.pdf_tool import PDFTool
 
         tool = PDFTool()
-        result = asyncio.run(
-            tool.execute(action="write", text="test", output_path=str(tmp_path / "out.pdf"))
-        )
+        result = asyncio.run(tool.execute(action="write", text="test", output_path=str(tmp_path / "out.pdf")))
 
         # Si reportlab no está instalado → error claro
         # Si está instalado → ok
@@ -480,9 +453,7 @@ class TestPDFTool:
         from eon.tools.pdf_tool import PDFTool
 
         tool = PDFTool()
-        result = asyncio.run(
-            tool.execute(action="invalid")
-        )
+        result = asyncio.run(tool.execute(action="invalid"))
 
         assert result.ok is False
         assert "invalid" in result.error.lower() or "desconocida" in result.error.lower()
@@ -496,9 +467,7 @@ class TestImageTool:
         from eon.tools.image_tool import ImageTool
 
         tool = ImageTool()
-        result = asyncio.run(
-            tool.execute(action="info", path="nonexistent.png")
-        )
+        result = asyncio.run(tool.execute(action="info", path="nonexistent.png"))
 
         assert result.ok is False
 
@@ -507,9 +476,7 @@ class TestImageTool:
         from eon.tools.image_tool import ImageTool
 
         tool = ImageTool()
-        result = asyncio.run(
-            tool.execute(action="invalid")
-        )
+        result = asyncio.run(tool.execute(action="invalid"))
 
         assert result.ok is False
 
@@ -522,9 +489,7 @@ class TestEmailTool:
         from eon.tools.email_tool import EmailTool
 
         tool = EmailTool()
-        result = asyncio.run(
-            tool.execute(to="test@example.com", subject="test", body="hello")
-        )
+        result = asyncio.run(tool.execute(to="test@example.com", subject="test", body="hello"))
 
         assert result.ok is False
         assert "SMTP" in result.error or "smtp" in result.error.lower()
@@ -539,9 +504,7 @@ class TestInternetTool:
 
         tool = InternetTool()
         try:
-            result = asyncio.run(
-                tool.execute(url="http://example.com")
-            )
+            result = asyncio.run(tool.execute(url="http://example.com"))
 
             # Si httpx está instalado, puede fallar por red
             # Lo importante es que no crashea
@@ -559,9 +522,7 @@ class TestAPITool:
 
         tool = APITool()
         try:
-            result = asyncio.run(
-                tool.execute(url="http://api.example.com")
-            )
+            result = asyncio.run(tool.execute(url="http://api.example.com"))
 
             assert isinstance(result, ToolResult)
         finally:
@@ -630,9 +591,7 @@ class TestExamplePlugins:
         loader.load_directory(examples_dir)
 
         if "echo" in registry.list():
-            result = asyncio.run(
-                registry.execute("echo", message="test message")
-            )
+            result = asyncio.run(registry.execute("echo", message="test message"))
             assert result.ok is True
             assert result.data["echo"] == "test message"
 

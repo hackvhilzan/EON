@@ -17,6 +17,7 @@ Los reducers implementados son conservadores: solo aplican eventos cuyo efecto
 en el estado es reversible y conocido. Eventos desconocidos se preservan en
 unapplied_events para inspección manual o futuros reducers.
 """
+
 from __future__ import annotations
 
 import logging
@@ -24,7 +25,7 @@ from typing import Any
 
 from ..checkpoint.store import SQLiteCheckpointStore
 from ..persistence.event_store import EventStore
-from .models import ReconstructionMode, ReconstructedState
+from .models import ReconstructedState, ReconstructionMode
 
 logger = logging.getLogger("eon.timetravel")
 
@@ -32,23 +33,25 @@ logger = logging.getLogger("eon.timetravel")
 # Eventos cuyo efecto en el estado conocemos y podemos aplicar de forma
 # conservadora. Estos son eventos de transición de estado que actualizan
 # campos específicos del stores_state.
-_APPLIED_EVENT_TYPES: frozenset[str] = frozenset({
-    "coordinator.transition",
-    "objective.transition",
-    "plan.created",
-    "plan.activated",
-    "scheduler.iniciado",
-    "scheduler.finalizado",
-    "task.ready",
-    "task.completed",
-    "task.failed",
-    "workspace.transition",
-    "package.transition",
-    "checkpoint.created",
-    "hitl.interrupt.created",
-    "hitl.interrupt.resolved",
-    "execution.forked",
-})
+_APPLIED_EVENT_TYPES: frozenset[str] = frozenset(
+    {
+        "coordinator.transition",
+        "objective.transition",
+        "plan.created",
+        "plan.activated",
+        "scheduler.iniciado",
+        "scheduler.finalizado",
+        "task.ready",
+        "task.completed",
+        "task.failed",
+        "workspace.transition",
+        "package.transition",
+        "checkpoint.created",
+        "hitl.interrupt.created",
+        "hitl.interrupt.resolved",
+        "execution.forked",
+    }
+)
 
 
 class TimeMachine:
@@ -261,10 +264,12 @@ class TimeMachine:
                 forks = state.get("_forks", [])
                 if not isinstance(forks, list):
                     forks = []
-                forks.append({
-                    "forked_execution_id": payload.get("new_execution_id"),
-                    "at_seq": event.get("seq"),
-                })
+                forks.append(
+                    {
+                        "forked_execution_id": payload.get("new_execution_id"),
+                        "at_seq": event.get("seq"),
+                    }
+                )
                 state["_forks"] = forks
 
         if coordinator_state:

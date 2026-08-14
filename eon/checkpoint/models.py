@@ -1,4 +1,5 @@
 """Modelos de checkpoint y semantic snapshot."""
+
 from __future__ import annotations
 
 import hashlib
@@ -18,10 +19,10 @@ class CheckpointKind(str, Enum):
     """Tipo de checkpoint."""
 
     MANUAL = "manual"
-    MILESTONE = "milestone"          # hito: plan creado, task completada, etc.
-    EVERY_TASK = "every_task"        # después de cada task
+    MILESTONE = "milestone"  # hito: plan creado, task completada, etc.
+    EVERY_TASK = "every_task"  # después de cada task
     PRE_INTERRUPT = "pre_interrupt"  # antes de una pausa HITL
-    RECOVERY = "recovery"            # punto de recuperación automática
+    RECOVERY = "recovery"  # punto de recuperación automática
 
 
 @dataclass

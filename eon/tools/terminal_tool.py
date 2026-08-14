@@ -6,6 +6,7 @@ TerminalTool — ejecución de comandos shell (bajo sandbox).
 ADVERTENCIA: Esta Tool es de ALTO RIESGO. Debe usarse solo bajo
 gobernanza del PolicyEngine y con SandboxProfile restrictivo.
 """
+
 from __future__ import annotations
 
 import logging

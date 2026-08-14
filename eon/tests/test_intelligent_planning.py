@@ -7,21 +7,21 @@ Criterios de aceptación:
 - ObjectiveDecomposer: decompose complex objectives, max_depth
 - AutoReplanner: classify failures, select strategy, build modified tasks
 """
+
 from __future__ import annotations
 
 import pytest
 
 from eon.planning import (
-    PlanScorer,
-    PlanSimulator,
-    ObjectiveDecomposer,
     AutoReplanner,
+    ObjectiveDecomposer,
     PlanScore,
+    PlanScorer,
     PlanSimulation,
-    SubObjective,
+    PlanSimulator,
     ReplanContext,
+    SubObjective,
 )
-
 
 # ─── PlanScorer Tests ─────────────────────────────────────
 
@@ -68,10 +68,13 @@ class TestPlanScorer:
         plans = [
             {"id": "p1", "tasks": [{"id": "t1", "description": "generar PDF ventas"}]},
             {"id": "p2", "tasks": [{"id": f"t{i}", "description": f"step {i}"} for i in range(10)]},
-            {"id": "p3", "tasks": [
-                {"id": "t1", "description": "buscar ventas"},
-                {"id": "t2", "description": "generar PDF"},
-            ]},
+            {
+                "id": "p3",
+                "tasks": [
+                    {"id": "t1", "description": "buscar ventas"},
+                    {"id": "t2", "description": "generar PDF"},
+                ],
+            },
         ]
         ranked = scorer.rank(plans, success_criteria="generar PDF ventas")
         assert len(ranked) == 3
@@ -337,14 +340,16 @@ class TestAutoReplanner:
         assert "error1" in d["previous_errors"]
 
     def test_replan_with_skill_suggestion(self, tmp_path):
-        from eon.memory import SkillLibrary, Skill
+        from eon.memory import Skill, SkillLibrary
 
         lib = SkillLibrary(db_path=str(tmp_path / "skills.db"))
-        lib.register(Skill(
-            name="alt_approach",
-            objective_pattern="alternative approach",
-            success_count=3,
-        ))
+        lib.register(
+            Skill(
+                name="alt_approach",
+                objective_pattern="alternative approach",
+                success_count=3,
+            )
+        )
 
         replanner = AutoReplanner(skill_library=lib)
         ctx = ReplanContext(

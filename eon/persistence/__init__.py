@@ -15,6 +15,7 @@ Uso:
 El EventStore permite event sourcing: replay de eventos para
 reconstrucción de estado tras un reinicio de proceso.
 """
+
 from __future__ import annotations
 
 from .event_store import EventEntry, EventStore

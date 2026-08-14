@@ -7,6 +7,7 @@ Dry-run: no ejecuta tasks realmente, solo predice.
 Usa datos históricos si están disponibles (EpisodicMemoryStore opcional).
 Identifica bottlenecks (tasks con muchas dependencias).
 """
+
 from __future__ import annotations
 
 import logging

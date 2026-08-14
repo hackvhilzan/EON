@@ -6,6 +6,7 @@ EmailTool — envío de emails via SMTP.
 Dependencia: smtplib (stdlib, siempre disponible)
 Requiere configuración SMTP.
 """
+
 from __future__ import annotations
 
 import logging

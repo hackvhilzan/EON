@@ -12,6 +12,7 @@ PluginLoader descubre plugins desde:
 - Directorio (EON_PLUGINS_DIR)
 - Entry points (pip install eon-plugin-foo)
 """
+
 from __future__ import annotations
 
 from .base import ToolPlugin

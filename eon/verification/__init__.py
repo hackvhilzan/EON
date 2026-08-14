@@ -16,23 +16,24 @@ Capas:
 CompositeVerifier combina todas las capas y agrega confianzas.
 EvidenceGraph conecta Task → ToolResult → artefacto → criterio verificado.
 """
+
 from __future__ import annotations
 
-from .models import (
-    EvidenceNode,
-    EvidenceGraph,
-    LayerResult,
-    VerificationStatus,
-    VerificationResult,
-)
 from .composite_verifier import CompositeVerifier
-from .structural_verifier import StructuralVerifier
-from .criteria_verifier import CriteriaVerifier
-from .llm_judge_verifier import LLMJudgeVerifier
-from .testgen_verifier import TestBasedVerifier
-from .external_verifier import ExternalVerifier
 from .confidence import ConfidenceCalibrator
+from .criteria_verifier import CriteriaVerifier
+from .external_verifier import ExternalVerifier
+from .llm_judge_verifier import LLMJudgeVerifier
+from .models import (
+    EvidenceGraph,
+    EvidenceNode,
+    LayerResult,
+    VerificationResult,
+    VerificationStatus,
+)
 from .runtime_adapter import CompositeVerifierAdapter
+from .structural_verifier import StructuralVerifier
+from .testgen_verifier import TestBasedVerifier
 
 __all__ = [
     "CompositeVerifier",
