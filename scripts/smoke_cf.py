@@ -21,9 +21,16 @@ suma") -- sin scraping, así este smoke no depende de Codeforces ni de
 parsear HTML. Usa solve(problem, ...) (no solve_problem(url, ...)) por
 eso mismo.
 
-Criterio de éxito: el loop corre entero y escribe >= 1 trace al JSONL.
-PASS o FAIL del solver dan igual -- eso lo decide el modelo, no este
-script. Fallo = el loop crashea, o el JSONL queda vacío.
+Códigos de salida:
+    0  El loop corrió entero, escribió >= 1 trace, y al menos un
+       intento tiene respuesta real del modelo (output_raw no vacío).
+       PASS o FAIL del solver dan igual -- eso lo decide el modelo,
+       no este script.
+    1  Crash: excepción sin capturar, o el JSONL quedó vacío.
+    2  Sin motor: el loop corrió y escribió traces, pero ningún
+       intento llegó a obtener respuesta del modelo (todos con
+       output_raw vacío -- ej. "connection refused"). No es un smoke
+       en verde: no hay LLM detrás para probar nada.
 
 Uso:
     python3 scripts/smoke_cf.py
@@ -142,6 +149,9 @@ async def _run(args: argparse.Namespace) -> int:
         )
         return 1
 
+    registros = [json.loads(linea) for linea in lineas]
+    hubo_respuesta_real = any(r.get("output_raw") for r in registros)
+
     print()
     print("=" * 60)
     for attempt in result.attempts:
@@ -150,11 +160,21 @@ async def _run(args: argparse.Namespace) -> int:
     print(f"[smoke_cf] traces escritos: {len(lineas)} -> {out_path}")
     print("=" * 60)
     print("[smoke_cf] primer trace:")
-    print(json.dumps(json.loads(lineas[0]), indent=2, ensure_ascii=False, sort_keys=True))
+    print(json.dumps(registros[0], indent=2, ensure_ascii=False, sort_keys=True))
     print()
+
+    if not hubo_respuesta_real:
+        print(
+            "[smoke_cf] SIN MOTOR: el pipeline corrió y escribió traces, pero ningún intento "
+            "obtuvo respuesta del modelo (output_raw vacío en todos) -- no hay LLM alcanzable, "
+            "no confundir con un smoke en verde.",
+            file=sys.stderr,
+        )
+        return 2
+
     print(
-        f"[smoke_cf] OK: el pipeline corrió entero y escribió {len(lineas)} trace(s) "
-        f"({'PASS' if result.solved else 'FAIL'} -- da igual para este smoke)."
+        f"[smoke_cf] OK: el pipeline corrió entero y escribió {len(lineas)} trace(s) con respuesta "
+        f"real del modelo ({'PASS' if result.solved else 'FAIL'} -- da igual para este smoke)."
     )
     return 0
 
