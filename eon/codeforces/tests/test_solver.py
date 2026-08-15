@@ -9,9 +9,13 @@ from eon.tools.llm_tool import LLMTool
 
 from ..solver import (
     CFFetchError,
+    CFProblem,
+    CFSample,
+    _build_prompt,
     _extraer_solucion,
     fetch_problem,
     parse_problem_html,
+    solve,
     solve_problem,
 )
 from ..trace_logger import TraceRecord
@@ -245,3 +249,43 @@ class TestTraceSinkEnganche:
 
         assert exitoso.verdict == "PASS"
         assert exitoso.attempt_index == 1
+
+
+class TestSolveStandalone:
+    """solve(problem, ...) es el loop en sí, sin fetch/parseo de HTML --
+    útil para problemas armados a mano (ver scripts/smoke_cf.py)."""
+
+    async def test_solve_resuelve_sin_internet_tool_ni_html(self):
+        problem = CFProblem(
+            url="smoke://suma",
+            statement="Lee dos enteros y suma.",
+            samples=[CFSample(input="1 2\n", output="3\n")],
+        )
+        llm = _LLMDeRespuestasEnSecuencia([_PY_SOLUCION_CORRECTA])
+        result = await solve(problem, llm_tool=LLMTool(llm=llm), executor=SandboxExecutor())
+        assert result.solved
+        assert result.language == "python"
+
+    async def test_solve_problem_delega_en_solve_con_el_problema_fetcheado(self):
+        llm = _LLMDeRespuestasEnSecuencia([_PY_SOLUCION_CORRECTA])
+        result = await solve_problem(
+            "https://cf/1A",
+            internet_tool=_FakeInternetTool(_PROBLEM_HTML),
+            llm_tool=LLMTool(llm=llm),
+            executor=SandboxExecutor(),
+        )
+        assert result.solved
+
+
+class TestLanguageHint:
+    def test_sin_hint_ofrece_python_y_cpp(self):
+        problem = CFProblem(url="x", statement="enunciado", samples=[])
+        prompt = _build_prompt(problem, None)
+        assert "```python" in prompt
+        assert "```cpp" in prompt
+
+    def test_hint_python_no_ofrece_cpp(self):
+        problem = CFProblem(url="x", statement="enunciado", samples=[])
+        prompt = _build_prompt(problem, None, language_hint="python")
+        assert "```python" in prompt
+        assert "cpp" not in prompt.lower()

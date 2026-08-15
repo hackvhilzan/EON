@@ -24,6 +24,7 @@ from .solver import (
     SolveResult,
     fetch_problem,
     parse_problem_html,
+    solve,
     solve_problem,
 )
 from .trace_logger import (
@@ -47,6 +48,7 @@ __all__ = [
     "SolveResult",
     "fetch_problem",
     "parse_problem_html",
+    "solve",
     "solve_problem",
     "JsonlTraceSink",
     "ModelInfo",

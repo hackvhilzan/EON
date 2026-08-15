@@ -15,6 +15,11 @@ ToolResult`, la misma interfaz que ya usan LLMTool/InternetTool). El
 punto de enganche para que esto se vuelva una Task/capability más del
 Coordinator -- sin reescribir nada de este módulo -- está documentado
 en eon/codeforces/coordinator_binding.py.
+
+`solve_problem(url, ...)` hace fetch + parseo de HTML y delega en
+`solve(problem, ...)`, que es el loop en sí y no necesita
+internet_tool -- útil para correrlo contra un `CFProblem` armado a
+mano (ver scripts/smoke_cf.py) sin depender de Codeforces.
 """
 
 from __future__ import annotations
@@ -169,12 +174,24 @@ async def fetch_problem(internet_tool: Tool, url: str) -> CFProblem:
 _LANG_FENCE_RE = re.compile(r"```(python|cpp|c\+\+)\s*\n(.*?)```", re.S | re.I)
 
 
-def _build_prompt(problem: CFProblem, feedback: str | None) -> str:
+def _build_prompt(problem: CFProblem, feedback: str | None, *, language_hint: str | None = None) -> str:
+    if language_hint == "python":
+        instruccion = (
+            "Resuelve el siguiente problema de Codeforces en Python. "
+            "Responde con un único bloque de código en un fence "
+            "```python. El programa debe leer la entrada de stdin y "
+            "escribir la respuesta en stdout, sin texto adicional "
+            "fuera del bloque de código."
+        )
+    else:
+        instruccion = (
+            "Resuelve el siguiente problema de Codeforces. Responde con un "
+            "único bloque de código en un fence ```python o ```cpp. El "
+            "programa debe leer la entrada de stdin y escribir la respuesta "
+            "en stdout, sin texto adicional fuera del bloque de código."
+        )
     partes = [
-        "Resuelve el siguiente problema de Codeforces. Responde con un "
-        "único bloque de código en un fence ```python o ```cpp. El "
-        "programa debe leer la entrada de stdin y escribir la respuesta "
-        "en stdout, sin texto adicional fuera del bloque de código.",
+        instruccion,
         f"Enunciado:\n{problem.statement}",
     ]
     if problem.samples:
@@ -356,25 +373,63 @@ async def solve_problem(
     max_retries: int = _DEFAULT_MAX_RETRIES,
     time_budget_seconds: float = _DEFAULT_TIME_BUDGET_SECONDS,
     checker_mode: CheckMode = "whitespace_normalized",
+    language_hint: str | None = None,
 ) -> SolveResult:
-    """Resuelve `problem_url`: fetch -> solve(LLM) -> sandbox -> cf_checker,
-    con hasta `max_retries` intentos realimentando el error al modelo.
+    """Resuelve `problem_url`: fetch(internet_tool) -> solve() -- ver
+    `solve()` para el loop en sí (fetch es lo único que esta función
+    añade encima).
+    """
+    problem = await fetch_problem(internet_tool, problem_url)
+    return await solve(
+        problem,
+        llm_tool=llm_tool,
+        executor=executor,
+        trace_sink=trace_sink,
+        model_info=model_info,
+        max_retries=max_retries,
+        time_budget_seconds=time_budget_seconds,
+        checker_mode=checker_mode,
+        language_hint=language_hint,
+    )
+
+
+async def solve(
+    problem: CFProblem,
+    *,
+    llm_tool: Tool,
+    executor: SandboxExecutor | None = None,
+    trace_sink: TraceSink | None = None,
+    model_info: ModelInfo | None = None,
+    max_retries: int = _DEFAULT_MAX_RETRIES,
+    time_budget_seconds: float = _DEFAULT_TIME_BUDGET_SECONDS,
+    checker_mode: CheckMode = "whitespace_normalized",
+    language_hint: str | None = None,
+) -> SolveResult:
+    """El loop real: solve(LLM) -> sandbox -> cf_checker, con hasta
+    `max_retries` intentos realimentando el error al modelo, dado un
+    `CFProblem` ya construido (sin fetch/parseo de HTML) -- útil para
+    problemas armados a mano (fixtures sintéticos, scripts/smoke_cf.py)
+    sin depender de internet_tool ni de Codeforces. `solve_problem()`
+    es un wrapper de esta función que primero hace el fetch.
 
     Si se inyecta `trace_sink` (protocolo TraceSink, ver trace_logger.py),
     cada intento -- PASS o FAIL -- se registra tras su verify vía
     `trace_sink.write()`. Sin `trace_sink` no cambia nada del
     comportamiento existente.
+
+    `language_hint="python"` fuerza el prompt a pedir solo Python (sin
+    ofrecer C++ como opción) -- útil para no necesitar g++ en el
+    sandbox.
     """
     executor = executor or SandboxExecutor()
     model_info = model_info or ModelInfo()
-    problem = await fetch_problem(internet_tool, problem_url)
 
     attempts: list[SolveAttempt] = []
     feedback: str | None = None
 
     for attempt_num in range(1, max_retries + 1):
         deadline = time.monotonic() + time_budget_seconds
-        prompt = _build_prompt(problem, feedback)
+        prompt = _build_prompt(problem, feedback, language_hint=language_hint)
 
         llm_result = await llm_tool.execute(prompt=prompt)
         if not llm_result.ok:
