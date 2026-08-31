@@ -53,6 +53,19 @@ class TestSandboxBasic:
         assert result.success
         assert "test content" in result.stdout
 
+    def test_run_python_receives_stdin(self, executor: SandboxExecutor):
+        result = executor.run_python(
+            code="import sys; print(sys.stdin.read().strip().upper())",
+            stdin="hola sandbox\n",
+        )
+        assert result.success
+        assert "HOLA SANDBOX" in result.stdout
+
+    def test_run_command_receives_stdin(self, executor: SandboxExecutor):
+        result = executor.run_command(["cat"], stdin="hola comando\n")
+        assert result.success
+        assert "hola comando" in result.stdout
+
 
 # ─── Timeout ─────────────────────────────────────────────
 

@@ -95,6 +95,7 @@ class SandboxExecutor:
         code: str,
         profile: SandboxProfile | None = None,
         extra_files: dict[str, str] | None = None,
+        stdin: str | None = None,
     ) -> SandboxResult:
         """Ejecuta código Python en el sandbox.
 
@@ -102,6 +103,7 @@ class SandboxExecutor:
             code: Código Python a ejecutar.
             profile: Perfil de sandbox (límites). Si es None, usa workspace_only().
             extra_files: Archivos adicionales a copiar al sandbox.
+            stdin: Texto a enviar por stdin al proceso, si lo hay.
 
         Returns:
             SandboxResult con stdout, stderr, exit_code, etc.
@@ -141,6 +143,7 @@ class SandboxExecutor:
                 [sys.executable, str(script_path)],
                 cwd=sandbox_root,
                 env=env,
+                stdin=subprocess.PIPE if stdin is not None else None,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 start_new_session=True,  # Nuevo process group para killpg
@@ -148,7 +151,7 @@ class SandboxExecutor:
                 text=True,
             )
             try:
-                stdout, stderr = proc.communicate(timeout=profile.max_duration_seconds)
+                stdout, stderr = proc.communicate(input=stdin, timeout=profile.max_duration_seconds)
             except subprocess.TimeoutExpired:
                 # Matar todo el process group
                 self._kill_process_group(proc.pid)
@@ -208,12 +211,14 @@ class SandboxExecutor:
         self,
         command: list[str],
         profile: SandboxProfile | None = None,
+        stdin: str | None = None,
     ) -> SandboxResult:
         """Ejecuta un comando en el sandbox.
 
         Args:
             command: Comando y argumentos como lista.
             profile: Perfil de sandbox.
+            stdin: Texto a enviar por stdin al proceso, si lo hay.
         """
         profile = profile or SandboxProfile.workspace_only()
         sandbox_root = tempfile.mkdtemp(prefix="eon_cmd_", dir=str(self._base_temp))
@@ -230,6 +235,7 @@ class SandboxExecutor:
                 command,
                 cwd=sandbox_root,
                 env=env,
+                stdin=subprocess.PIPE if stdin is not None else None,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 start_new_session=True,
@@ -237,7 +243,7 @@ class SandboxExecutor:
                 text=True,
             )
             try:
-                stdout, stderr = proc.communicate(timeout=profile.max_duration_seconds)
+                stdout, stderr = proc.communicate(input=stdin, timeout=profile.max_duration_seconds)
             except subprocess.TimeoutExpired:
                 self._kill_process_group(proc.pid)
                 try:
